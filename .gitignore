@@ -5,6 +5,7 @@ resources/*
 .settings
 .*project
 v_env/
+venv/
 *.pyc
 */local_config.py
 error.log
