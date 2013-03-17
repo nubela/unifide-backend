@@ -4,6 +4,7 @@
 from urlparse import parse_qsl
 from flask.helpers import json
 import requests
+from unifide_backend.util.db import __get_collection
 
 FACEBOOK_GRAPH_API_URL = "https://graph.facebook.com"
 PERMISSIONS = "manage_pages,publish_stream"
@@ -26,20 +27,19 @@ def get_page_list(user_access_token):
 
     full_url = "%s/%s/%s" % (FACEBOOK_GRAPH_API_URL, fb_user_info["id"], "accounts")
     r = requests.get(full_url, params=param)
-    sq = dict(parse_qsl(r.text))
-    data_list = sq["data"]
+    data = json.loads(r.text)
 
     #formulate list of page name, id, category
     page_list = []
-    for page in data_list:
+    for d in data["data"]:
         p = {
-            "category": page["category"],
-            "name": page["name"],
-            "id": page["id"]
+            "category": d["category"],
+            "name": d["name"],
+            "id": d["id"]
         }
-        page_list += p
+        page_list.append(p)
 
-    return page_list
+    return page_list, fb_user_info["id"]
 
 
 def get_user_access_token(code, app_id, app_secret, redirect_uri="http://127.0.0.1/"):
@@ -62,28 +62,20 @@ def get_user_access_token(code, app_id, app_secret, redirect_uri="http://127.0.0
     return sq["access_token"]
 
 
-def get_page_access_token(page_id):
-    """
-    Get page access token with page id
-    """
-
-    return ""
-
-
-def save_page_access_token(page_id):
+def get_page_access_token(page_id, user_access_token):
     """
     Save page access token with page id
     """
 
     param = {
-        "fields": "access_token",
-        "access_token": ""
+        "fields": "access_token,name",
+        "access_token": user_access_token
     }
 
     full_url = "%s/%s" % (FACEBOOK_GRAPH_API_URL, page_id)
     r = requests.get(full_url, params=param)
-    sq = dict(parse_qsl(r.text))
-    return sq["access_token"]
+    data = json.loads(r.text)
+    return data["access_token"], data["name"]
 
 
 class FacebookApi:

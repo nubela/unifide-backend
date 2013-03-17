@@ -8,6 +8,7 @@ def connect_facebook():
     (PUT: social_connect/facebook)
     """
     from unifide_backend.action.social.facebook import get_user_access_token, get_page_list
+    from unifide_backend.action.user import get_user, save_fb_oauth
 
     verb = "put"
     noun = "social_connect/facebook"
@@ -20,7 +21,18 @@ def connect_facebook():
     #to-do
 
     user_access_token = get_user_access_token(facebook_code, FB_APP_ID, FB_APP_SECRET)
-    page_list = get_page_list(user_access_token)
+    user = get_user(user_id)
+    page_list, fb_id = get_page_list(user_access_token)
+    #save user access token to user
+    fbUser_id = save_fb_oauth(user, user_access_token, fb_id)
+
+    if page_list is None:
+        return jsonify({"status": "error",
+                        "error": "Fail to get list of fb pages"})
+
+    if fbUser_id is None:
+        return jsonify({"status": "error",
+                        "error": "Fail to save user access token"})
 
     return jsonify({"status": "ok",
                     "pages": page_list})
@@ -30,7 +42,8 @@ def put_facebook_page():
     """
     (PUT: social_connect/facebook/page)
     """
-    from unifide_backend.action.social.facebook import save_page_access_token
+    from unifide_backend.action.social.facebook import get_page_access_token
+    from unifide_backend.action.user import get_user, get_user_access_token, save_fb_page
 
     verb = "put"
     noun = "social_connect/facebook/page"
@@ -42,10 +55,16 @@ def put_facebook_page():
     #auth check
     #to-do
 
-    page_access_token = save_page_access_token(fb_page_id)
+    user_access_token = get_user_access_token(user_id)
+    page_access_token, page_name = get_page_access_token(fb_page_id, user_access_token)
+    user = get_user(user_id)
+    fbPage_id = save_fb_page(user, fb_page_id, user_access_token, page_access_token, page_name)
 
+    if fbPage_id is None:
+        return jsonify(({"status": "error",
+                         "error": "Fail to save page access token"}))
 
-    return ""
+    return jsonify({"status": "ok"})
 
 
 def connect_twitter():

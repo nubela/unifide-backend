@@ -3,10 +3,8 @@ import unittest
 class TestBase(unittest.TestCase):
 
     def setUp(self):
-
-        return ""
+        pass
 
 
     def tearDown(self):
-
-        return ""
+        pass

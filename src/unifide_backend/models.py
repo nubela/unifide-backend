@@ -47,8 +47,8 @@ class FacebookUser:
 class FacebookPage:
     def __init__(self, **kwargs):
         self.page_id = None
+        self.name = None
         self.page_access_token = None
-        self.category = None
 
         for k, v in kwargs.iteritems():
             setattr(self, k, v)
