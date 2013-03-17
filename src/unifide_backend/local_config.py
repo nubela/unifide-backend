@@ -5,6 +5,7 @@ cwd = os.path.dirname(os.path.realpath(__file__))
 
 DEBUG = True
 SQL_URI = 'mongodb://kianwei:thisisnotsecureatall@localhost/unifide-backend'
+DB_NAME = 'unifide-backend'
 LOG_FILE = os.path.join(cwd, "log.txt")
 
 #facebook app info

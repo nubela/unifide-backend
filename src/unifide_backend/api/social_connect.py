@@ -13,17 +13,40 @@ def connect_facebook():
     noun = "social_connect/facebook"
 
     #req_vars
+    user_id = request.form.get("user_id")
     facebook_code = request.form.get("code")
 
-
     #auth check
-
+    #to-do
 
     user_access_token = get_user_access_token(facebook_code, FB_APP_ID, FB_APP_SECRET)
     page_list = get_page_list(user_access_token)
 
     return jsonify({"status": "ok",
-                    "page_id": ""})
+                    "pages": page_list})
+
+
+def put_facebook_page():
+    """
+    (PUT: social_connect/facebook/page)
+    """
+    from unifide_backend.action.social.facebook import save_page_access_token
+
+    verb = "put"
+    noun = "social_connect/facebook/page"
+
+    #req_vars
+    user_id = request.form.get("user_id")
+    fb_page_id = request.form.get("page_id")
+
+    #auth check
+    #to-do
+
+    page_access_token = save_page_access_token(fb_page_id)
+
+
+    return ""
+
 
 def connect_twitter():
     """
@@ -54,6 +77,9 @@ def _register_api(app):
 
     app.add_url_rule('/social_connect/facebook',
         "connect_facebook", connect_facebook, methods=['PUT'])
+
+    app.add_url_rule('/social_connect/facebook/page',
+        "put_facebook_page", put_facebook_page, methods=['PUT'])
 
     app.add_url_rule('/social_connect/twitter',
         "connect_twitter", connect_twitter, methods=['PUT'])

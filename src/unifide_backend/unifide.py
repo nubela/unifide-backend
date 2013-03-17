@@ -4,11 +4,9 @@
 from flask import Flask
 from local_config import API_TO_REGISTER, LOG_FILE, SQL_URI, DEBUG
 import api
-from flask.ext.pymongo import PyMongo
-
 
 def _app_init(app):
-    init_app(app, mongo)
+    init_app(app)
 
     if app.config['DEBUG']:
         from werkzeug.wsgi import SharedDataMiddleware
@@ -29,7 +27,7 @@ def _app_init(app):
         app.logger.addHandler(file_handler)
 
 
-def init_app(app, db):
+def init_app(app):
     """
     initializes the app on first run
     - registeres it with apis
@@ -41,5 +39,3 @@ def init_app(app, db):
 
 app = Flask(__name__)
 app.debug = DEBUG
-app.config['MONGO_URI'] = SQL_URI
-mongo = PyMongo(app)
