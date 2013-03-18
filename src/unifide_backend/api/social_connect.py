@@ -94,17 +94,17 @@ def _register_api(app):
     interface method so the app can register the API (routing) calls.
     """
 
-    app.add_url_rule('/social_connect/facebook',
+    app.add_url_rule('/social_connect/facebook/',
         "connect_facebook", connect_facebook, methods=['PUT'])
 
-    app.add_url_rule('/social_connect/facebook/page',
+    app.add_url_rule('/social_connect/facebook/page/',
         "put_facebook_page", put_facebook_page, methods=['PUT'])
 
-    app.add_url_rule('/social_connect/twitter',
+    app.add_url_rule('/social_connect/twitter/',
         "connect_twitter", connect_twitter, methods=['PUT'])
 
-    app.add_url_rule('/social_connect/foursquare',
+    app.add_url_rule('/social_connect/foursquare/',
         "connect_foursquare", connect_foursquare, methods=['PUT'])
 
-    app.add_url_rule('/social_connect/google_alerts',
+    app.add_url_rule('/social_connect/google_alerts/',
         "google_alerts", google_alerts, methods=['PUT'])
