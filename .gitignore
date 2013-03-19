@@ -13,3 +13,10 @@ error.log
 src/.idea*
 .DS_Store
 .idea*
+articles
+base
+campaigns
+comments
+ecommerce
+orders
+

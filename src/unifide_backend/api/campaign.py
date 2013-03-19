@@ -33,10 +33,8 @@ def _register_api(app):
     app.add_url_rule('/campaign/data/',
                      "put_campaign_data", put_campaign_data, methods=['PUT'])
 
-
     app.add_url_rule('/campaign/data/update/',
                      "update_campaign_data", update_campaign_data, methods=['PUT'])
-
 
     app.add_url_rule('/campaign/',
                      "get_campaign", get_campaign, methods=['GET'])

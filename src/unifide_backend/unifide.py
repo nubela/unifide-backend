@@ -2,7 +2,7 @@
 # backend for unifide
 #===============================================================================
 from flask import Flask
-from local_config import API_TO_REGISTER, LOG_FILE, SQL_URI, DEBUG
+from local_config import API_TO_REGISTER, LOG_FILE, DEBUG
 import api
 
 def _app_init(app):

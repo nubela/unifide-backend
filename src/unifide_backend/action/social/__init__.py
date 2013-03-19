@@ -1,1 +1,2 @@
-__author__ = 'kianwei'
+from facebook.action import *
+from facebook.model import *
