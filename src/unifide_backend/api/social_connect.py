@@ -53,7 +53,7 @@ def get_facebook_pages():
     """
     (GET: social_connect/facebook/page)
     """
-    from unifide_backend.action.social.facebook.action import get_fb_users, get_fb_page_list
+    from unifide_backend.action.social.facebook.action import get_fb_user, get_fb_page_list
 
     verb = "get"
     noun = "social_connect/facebook/page"
@@ -64,21 +64,17 @@ def get_facebook_pages():
     #auth check
     #to-do
 
-    fbUsers = get_fb_users(user_id)
-    page_list = []
-
-    for k,v in get_fb_page_list(fbUsers).iteritems():
-        page_list.append(v)
+    fbUser = get_fb_user(user_id)
 
     return jsonify({"status": "ok",
-                    "page_list": page_list})
+                    "page_list": get_fb_page_list(fbUser.fb_id, fbUser.access_token)})
 
 
 def put_facebook_page():
     """
     (PUT: social_connect/facebook/page)
     """
-    from unifide_backend.action.social.facebook.action import get_avail_slots, get_fb_users, get_fb_page_list, save_fb_page
+    from unifide_backend.action.social.facebook.action import get_avail_slots, get_fb_user, get_fb_page_list, save_fb_page
 
     verb = "put"
     noun = "social_connect/facebook/page"
@@ -90,21 +86,17 @@ def put_facebook_page():
     #auth check
     #to-do
 
-    fbUsers = get_fb_users(user_id)
+    fbUser = get_fb_user(user_id)
 
-    if fbUsers is not None and get_avail_slots(user_id) == 0:
+    if fbUser is not None and get_avail_slots(user_id) == 0:
         return jsonify({"status": "error",
                         "error": "Exceeded business subscription limit."})
 
-    page_list = get_fb_page_list(fbUsers)
-
-    for id,pages in page_list.iteritems():
-        for page in pages:
-            print page["id"]
-            if page["id"] == fb_page_id:
-                fbPage_obj = save_fb_page(user_id, id, page["name"], page["id"], page["category"], page["access_token"])
-                break
-        if fbPage_obj:
+    page_list = get_fb_page_list(fbUser.fb_id, fbUser.access_token)
+    for page in page_list:
+        if page["id"] == fb_page_id:
+            fbPage_obj = save_fb_page(fbUser.u_id, fbUser.fb_id, page["name"],
+                                      page["id"], page["category"], page["access_token"])
             break
 
     if fbPage_obj is None:

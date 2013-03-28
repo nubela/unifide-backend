@@ -39,6 +39,7 @@ class FBPage(Base):
         self.website = None
         self.talking_about_count = None
         self.hours = None
+        self.is_ready = True
 
         for k, v in kwargs.iteritems():
             setattr(self, k, v)
@@ -98,7 +99,11 @@ class FBEvent(Base):
 
 class FBPost(Base):
     def __init__(self, **kwargs):
+        self.post_id = None
         self.page_id = None
+        self.from_id = None
+        self.message = None
+        self.story = None
         self.picture = None
         self.link = None
         self.link_name = None
@@ -110,7 +115,6 @@ class FBPost(Base):
         self.likes = None
         self.place = None
         self.with_tags = None
-        self.comments = []
         self.object_id = None
         self.created_time = None
         self.updated_time = None
@@ -138,6 +142,7 @@ class FBComment(Base):
         self.text = None
         self.like_count = None
         self.created_time = None
+        self.updated_time = None
 
         for k, v in kwargs.iteritems():
             setattr(self, k, v)

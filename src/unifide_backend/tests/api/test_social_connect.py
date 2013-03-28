@@ -24,68 +24,64 @@ class SocialConnectTests(TestBase):
         assert fb_user.get_id()
         print fb_user.get_id()
 
-        """
-        u_id = "xaa8LzkwtCCgb6BeP"
-        code = "value"
-        data = {"user_id": u_id,
-                "code": code
-        }
-
-        resp = self.client.put("/", data=data)
-        print resp.data
-        resp_dict = json.loads(resp.data)
-
-        assert resp_dict["status"] == "ok"
-        assert FBPage.collection().find({"u_id": u_id}).count() > 0
-        """
-
 
     def _test_get_facebook_pages(self):
         print "test_get_facebook_pages"
-        from unifide_backend.action.social.facebook.action import get_fb_users, get_fb_page_list
+        from unifide_backend.action.social.facebook.action import get_fb_user, get_fb_page_list
 
         user_id = "xaa8LzkwtCCgb6BeP"
 
-        fbUsers = get_fb_users(user_id)
-        page_list = []
+        fbUser = get_fb_user(user_id)
+        page_list = get_fb_page_list(fbUser.fb_id, fbUser.access_token)
 
-        for k,v in get_fb_page_list(fbUsers).iteritems():
-            page_list.append(v)
-
-        assert page_list.count > 0
+        assert page_list is not None
         print json.dumps({"status": "ok", "page_list": page_list})
 
-        """
-        data = {"user_id": ""}
-        resp = self.client.get("/social_connect/facebook/page/?" + urllib.urlencode(data))
-        resp_dict = json.loads(resp.data)
-        print resp_dict["page_list"]
-        assert resp_dict["status"] == "ok"
-        """
 
-
-    def test_put_facebook_page(self):
+    def _test_put_facebook_page(self):
         print "test_put_facebook_page"
-        from unifide_backend.action.social.facebook.action import get_avail_slots, get_fb_users, get_fb_page_list, save_fb_page
+        from unifide_backend.action.social.facebook.action import get_avail_slots, get_fb_user, get_fb_page_list, save_fb_page
 
         user_id = "xaa8LzkwtCCgb6BeP"
         fb_page_id = "493620310673753"
 
-        fbUsers = get_fb_users(user_id)
+        fbUser = get_fb_user(user_id)
 
-        if fbUsers is not None and get_avail_slots(user_id) == 0:
+        if fbUser is not None and get_avail_slots(user_id) == 0:
             assert False
 
-        page_list = get_fb_page_list(fbUsers)
+        page_list = get_fb_page_list(fbUser.fb_id, fbUser.access_token)
 
-        print page_list
-        for id,pages in page_list.iteritems():
-            for page in pages:
-                print page["id"]
-                if page["id"] == fb_page_id:
-                    fbPage_obj = save_fb_page(user_id, id, page["name"], page["id"], page["category"], page["access_token"])
-                    break
-            if fbPage_obj:
+        for page in page_list:
+            if page["id"] == fb_page_id:
+                fbPage_obj = save_fb_page(fbUser.u_id, fbUser.fb_id, page["name"],
+                                          page["id"], page["category"], page["access_token"])
                 break
 
         assert fbPage_obj is not None
+
+
+    def _test_get_posts(self):
+        print "test_get_posts"
+        from unifide_backend.action.social.facebook.action import get_fb_page, get_fb_posts
+
+        user_id = "xaa8LzkwtCCgb6BeP"
+        page_id = "493620310673753"
+
+        print get_fb_posts(page_id, get_fb_page(user_id, page_id).page_access_token)
+
+    def test_save_posts(self):
+        print "test_save_posts"
+        from unifide_backend.action.social.facebook.action import get_fb_posts, get_fb_page, save_fb_posts
+
+        user_id = "xaa8LzkwtCCgb6BeP"
+        page_id = "493620310673753"
+
+        posts = get_fb_posts(page_id, get_fb_page(user_id, page_id).page_access_token)
+        print posts["data"]
+        save_fb_posts(posts["data"], page_id)
+
+
+
+
+
