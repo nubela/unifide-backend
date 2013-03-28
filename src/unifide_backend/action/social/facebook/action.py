@@ -1,176 +1,100 @@
 #===============================================================================
 # utils to interface with facebook graph api
 #===============================================================================
-from flask.helpers import json
-import requests
-import urllib
-import hashlib
-from base.db import get_mongo
-from base.users.default_config import USERS_COLLECTION_NAME
-from unifide_backend.action.social.facebook.model import FacebookUser, FacebookPage
+
+from unifide_backend.action.social.facebook.sdk import GraphAPI
+from unifide_backend.action.social.facebook.model import FBUser, FBPage
+from unifide_backend.action.admin.user.action import get_max_brands
+
+def get_avail_slots(user_id):
+    max_brand = get_max_brands(user_id)
+    fbUsers = get_fb_users(user_id)
+    for user in fbUsers:
+        if user.u_id == user_id:
+            max_brand -= len(user.pages)
+
+    return max_brand
 
 
-FACEBOOK_PAGE = "https://www.facebook.com"
-FACEBOOK_GRAPH_API_URL = "https://graph.facebook.com"
-PERMISSIONS = "manage_pages,publish_stream"
-API_CACHE = {}
+def save_fb_user(user_id, fb_id, access_token, token_expiry):
+
+    def save_obj():
+        fbUser_obj = FBUser()
+        fbUser_obj.u_id = user_id
+        fbUser_obj.fb_id = fb_id
+        fbUser_obj.access_token = access_token
+        fbUser_obj.expires = token_expiry
+        fbUser_obj._id = FBUser.collection().insert(fbUser_obj.serialize())
+        return fbUser_obj
+
+    # dupe check before inserting new fb user record into db
+    fbUser_obj = FBUser.collection().find({"u_id": user_id, "fb_id": fb_id, "access_token": access_token})
+    if fbUser_obj.count() > 0:
+        saved_fb_user_obj = FBUser.unserialize(fbUser_obj[0])
+    else:
+        saved_fb_user_obj = save_obj()
+
+    return saved_fb_user_obj
 
 
-def get_user_token(user_id):
-    """
-    Currently only supports 1 facebook account so first user access token [0]
-    """
-    user = __get_collection().find({"_id": user_id})
-    if user.count() > 0:
-        if user[0]["fb"]:
-            return user[0]["fb"][0]["access_token"]
-    return None
+def get_fb_users(user_id):
+    fbUsers = []
+    dic = FBUser.collection().find({"u_id": user_id})
+    if dic:
+        for d in dic:
+            fbUsers.append(FBUser.unserialize(d))
+    return fbUsers
 
 
-def save_fb_oauth(user_obj, user_access_token, fb_id):
-    """
-    Currently only supports 1 facebook account per user
-    """
-    fbUser_id = __get_collection().find({"_id": user_obj["_id"], "fb.access_token": user_access_token})
-    if user_obj is not None and fbUser_id.count() == 0:
-        fbUser = FacebookUser()
-        fbUser.fb_id = fb_id
-        fbUser.access_token = user_access_token
-        fbUser_id = __get_collection().update({"_id": user_obj["_id"]}, {"$push": {"fb": fbUser.serialize()}})
+def get_fb_id(access_token):
+    url = "%s" % ("me")
+    # retrieve fb id from local db cache
+    coll = FBUser.collection()
+    dic = coll.find_one({"access_token": str(access_token)})
+    fb_id = FBUser.unserialize(dic).fb_id if dic is not None else None
+    # retrieve from fb graph api if not found in local db
+    if fb_id is None:
+        fb_id = GraphAPI(access_token).request(url)["id"]
 
-    return fbUser_id
-
-
-def save_fb_page(user_obj, page_id, user_access_token, page_access_token, page_name):
-    """
-    Currently only supports 1 facebook account(w multiple pages) per user
-    """
-    fbPage_id = None
-    if user_obj is not None:
-        fbPage = FacebookPage()
-        fbPage.page_id = page_id
-        fbPage.page_access_token = page_access_token
-        fbPage.name = page_name
-        fbPage_id = __get_collection().update({"_id": user_obj["_id"], "fb.access_token": user_access_token}, {"$push": {"fb.$.pages": fbPage.serialize()}})
-
-    return fbPage_id
+    return fb_id
 
 
-#===============================================================================
-# base requirement = user access token to perform most of the API functions
-#===============================================================================
-class FacebookAPI:
-    access_token = None
+def get_fb_page_list(fbUsers):
+    page_list = {}
+    for user in fbUsers:
+        page = None
+        url = "%s/%s" % (user.fb_id, "accounts")
+        try:
+            page = GraphAPI(user.access_token).request(url)["data"]
+        except:
+            pass
+        if page:
+            page_list[user.fb_id] = page
 
-    def __init__(self, access_token):
-        self.access_token = access_token
-        API_CACHE[access_token] = self
-
-    @staticmethod
-    def new(access_token):
-        return API_CACHE.get(access_token, FacebookAPI(access_token))
-
-    @staticmethod
-    def auth_url(app_id, redirect_url, randNum=""):
-        url = "%s%s" % (FACEBOOK_PAGE, "/dialog/oauth?")
-        kvps = {'client_id': app_id,
-                'redirect_uri': redirect_url,
-                'scope': PERMISSIONS,
-                'state': hashlib.sha256(randNum)}
-
-        return url + urllib.urlencode(kvps)
-
-    @staticmethod
-    def generate(code, app_id, app_secret, redirect_url):
-        url = "%s%s" % (FACEBOOK_GRAPH_API_URL, "/oauth/access_token")
-        r = requests.get(url, params={
-            "client_id": app_id,
-            "client_secret": app_secret,
-            "redirect_uri": redirect_url,
-            "code": code,
-            })
-
-        user_access_token = json.loads(r.text)
-        return FacebookAPI(user_access_token["access_token"])
-
-    def get_info(self, rehash=False):
-        if not rehash and hasattr(self, "info"):
-            return self.info
-
-        url = "%s%s" % (FACEBOOK_GRAPH_API_URL, "/me")
-        r = requests.get(url, params={
-            "access_token": self.access_token,
-            })
-
-        self.info_raw = r.text
-        self.info = json.loads(self.info_raw)
-        return self.info
-
-    def get_friends(self, rehash=False):
-        if not rehash and hasattr(self, "friends"):
-            return self.friends
-
-        url = "%s%s" % (FACEBOOK_GRAPH_API_URL, "/me/friends")
-        r = requests.get(url, params={
-            "access_token": self.access_token,
-            "offset": 0,
-            "format": "json",
-            "limit": 50000,
-            })
-
-        self.friends_raw = r.text
-        self.friends = json.loads(self.friends_raw)
-
-        return self.friends
-
-    #===============================================================================
-    # formulate list of page name, id, category
-    # page_list = []
-    # for d in data["data"]:
-    #    p = {
-    #        "category": d["category"],
-    #        "name": d["name"],
-    #        "id": d["id"]
-    #    }
-    #    page_list.append(p)
-    #===============================================================================
-    def get_page_list(self, fb_id=None, rehash=False):
-        if not rehash and hasattr(self, "page_list"):
-            return self.page_list
-
-        if fb_id is None:
-            fb_id = self.get_info()["id"]
-
-        url = "%s/%s/%s" % (FACEBOOK_GRAPH_API_URL, fb_id, "accounts")
-        r = requests.get(url, params={
-            "access_token": self.access_token
-            })
-
-        self.page_list_raw = r.text
-        self.page_list = json.loads(self.page_list_raw)
-
-        return self.page_list
-
-    def get_page_access_token(self, page_id):
-        if hasattr(self, "page_list"):
-            for page in self.page_list["data"]:
-                if page["id"] == page_id:
-                    return page["access_token"], page["name"]
-
-        url = "%s/%s" % (FACEBOOK_GRAPH_API_URL, page_id)
-        r = requests.get(url, params={
-            "fields": "access_token,name",
-            "access_token": self.access_token
-            })
-
-        self.page_access_token = json.loads(r.text)
-
-        return self.page_access_token["access_token"], self.page_access_token["name"]
+    return page_list
 
 
-def __get_collection(coll=[]):
-    if coll == []:
-        mongo_db = get_mongo()
-        collection = mongo_db[USERS_COLLECTION_NAME]
-        coll += [collection]
-    return coll[0]
+def save_fb_page(u_id, fb_id, page_name, page_id, page_category, page_token):
+
+    def save_obj():
+        fbPage_obj = FBPage()
+        fbPage_obj.page_id = page_id
+        fbPage_obj.name = page_name
+        fbPage_obj.category = page_category
+        fbPage_obj.page_access_token = page_token
+        fbPage_obj._id = FBPage.collection().insert(fbPage_obj.serialize())
+        return fbPage_obj
+
+    fbPage_obj = FBPage.collection().find({"page_id": page_id, "page_access_token": page_token})
+    if fbPage_obj.count() > 0:
+        saved_fbPage_obj = FBPage.unserialize(fbPage_obj[0])
+    else:
+        saved_fbPage_obj = save_obj()
+
+    if FBUser.collection().find({"u_id": u_id, "fb_id": fb_id, "pages": saved_fbPage_obj.get_id()}).count() == 0:
+        FBUser.collection().update({"u_id": u_id, "fb_id": fb_id},
+                                   {"$push":
+                                        {"pages": saved_fbPage_obj.get_id()}
+                                   })
+
+    return saved_fbPage_obj

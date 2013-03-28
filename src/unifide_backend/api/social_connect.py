@@ -1,16 +1,31 @@
 from flask.globals import request
 from flask.helpers import json, jsonify
-from unifide_backend.local_config import FB_APP_ID, FB_APP_SECRET, FB_REDIRECT_URI
+from unifide_backend.local_config import FB_APP_ID, FB_APP_SECRET, FB_REDIRECT_URI, FB_PERMS
+
+
+def auth_facebook():
+    """
+    (GET: social_connect/facebook/auth)
+    """
+    from unifide_backend.action.social.facebook.sdk import auth_url
+
+    verb = "get"
+    noun = "social_connect/facebook/auth"
+
+    #auth check
+    #to-do
+
+    return auth_url(FB_APP_ID, FB_REDIRECT_URI, FB_PERMS)
 
 
 def connect_facebook():
     """
     (PUT: social_connect/facebook)
     """
-    from unifide_backend.action.social.facebook.action import FacebookAPI, save_fb_oauth
-    from base.users.action import get_user
+    from unifide_backend.action.social.facebook.sdk import get_access_token_from_code
+    from unifide_backend.action.social.facebook.action import get_fb_id, save_fb_user
+    from unifide_backend.action.admin.user.action import get_user
 
-    print "testing facebook"
     verb = "put"
     noun = "social_connect/facebook"
 
@@ -21,31 +36,49 @@ def connect_facebook():
     #auth check
     #to-do
 
-    fb_user = FacebookAPI.generate(facebook_code, FB_APP_ID, FB_APP_SECRET, FB_REDIRECT_URI)
     user = get_user(user_id)
-    page_list = fb_user.get_page_list()
-    fb_id = fb_user.get_info()["id"]
-    #save user access token to user
-    fbUser_id = save_fb_oauth(user, fb_user.access_token, fb_id)
+    result = get_access_token_from_code(facebook_code, FB_REDIRECT_URI, FB_APP_ID, FB_APP_SECRET)
+    access_token, token_expiry = result["access_token"], result["expires"]
+    fb_id = get_fb_id(access_token)
+    fb_user = save_fb_user(user.get_id(), fb_id, access_token, token_expiry)
 
-    if page_list is None:
-        return jsonify({"status": "error",
-                        "error": "Fail to get list of fb pages"})
-
-    if fbUser_id is None:
+    if fb_user is None:
         return jsonify({"status": "error",
                         "error": "Fail to save user access token"})
 
+    return jsonify({"status": "ok"})
+
+
+def get_facebook_pages():
+    """
+    (GET: social_connect/facebook/page)
+    """
+    from unifide_backend.action.social.facebook.action import get_fb_users, get_fb_page_list
+
+    verb = "get"
+    noun = "social_connect/facebook/page"
+
+    #req_vars
+    user_id = request.args.get("user_id")
+
+    #auth check
+    #to-do
+
+    fbUsers = get_fb_users(user_id)
+    page_list = []
+
+    for k,v in get_fb_page_list(fbUsers).iteritems():
+        page_list.append(v)
+
     return jsonify({"status": "ok",
-                    "pages": page_list})
+                    "page_list": page_list})
 
 
 def put_facebook_page():
     """
     (PUT: social_connect/facebook/page)
     """
-    from unifide_backend.action.social.facebook.action import FacebookAPI, get_user_token, save_fb_page
-    from base.users.action import get_user
+    from unifide_backend.action.social.facebook.action import get_avail_slots, get_fb_users, get_fb_page_list, save_fb_page
 
     verb = "put"
     noun = "social_connect/facebook/page"
@@ -57,12 +90,24 @@ def put_facebook_page():
     #auth check
     #to-do
 
-    fb_user = FacebookAPI.new(get_user_token(user_id))
-    page_token, page_name = fb_user.get_page_access_token(fb_page_id)
-    user = get_user(user_id)
-    fbPage_id = save_fb_page(user, fb_page_id, fb_user.access_token, page_token, page_name)
+    fbUsers = get_fb_users(user_id)
 
-    if fbPage_id is None:
+    if fbUsers is not None and get_avail_slots(user_id) == 0:
+        return jsonify({"status": "error",
+                        "error": "Exceeded business subscription limit."})
+
+    page_list = get_fb_page_list(fbUsers)
+
+    for id,pages in page_list.iteritems():
+        for page in pages:
+            print page["id"]
+            if page["id"] == fb_page_id:
+                fbPage_obj = save_fb_page(user_id, id, page["name"], page["id"], page["category"], page["access_token"])
+                break
+        if fbPage_obj:
+            break
+
+    if fbPage_obj is None:
         return jsonify(({"status": "error",
                          "error": "Fail to save page access token"}))
 
@@ -96,8 +141,14 @@ def _register_api(app):
     interface method so the app can register the API (routing) calls.
     """
 
+    app.add_url_rule('/social_connect/facebook/auth/',
+        "auth_facebook", auth_facebook, methods=['GET'])
+
     app.add_url_rule('/social_connect/facebook/',
-        "connect_facebook", connect_facebook, methods=['GET'])
+        "connect_facebook", connect_facebook, methods=['PUT'])
+
+    app.add_url_rule('/social_connect/facebook/page/',
+        "get_facebook_pages", get_facebook_pages, methods=['GET'])
 
     app.add_url_rule('/social_connect/facebook/page/',
         "put_facebook_page", put_facebook_page, methods=['PUT'])

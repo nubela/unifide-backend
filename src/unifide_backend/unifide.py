@@ -27,6 +27,19 @@ def _app_init(app):
         app.logger.addHandler(file_handler)
 
 
+def _app_init(app):
+    init_app(app)
+
+    if app.config['DEBUG']:
+        from werkzeug.wsgi import SharedDataMiddleware
+        import os
+
+
+        app.wsgi_app = SharedDataMiddleware(app.wsgi_app, {
+            '/': os.path.join(os.path.dirname(__file__), 'static')
+        })
+
+
 def init_app(app):
     """
     initializes the app on first run
@@ -35,6 +48,17 @@ def init_app(app):
     for api_name in API_TO_REGISTER:
         __import__("unifide_backend.api." + api_name)
         getattr(api, api_name)._register_api(app)
+
+
+def get_app(init=True):
+    """
+    for unit tests
+    """
+    app = Flask(__name__)
+    app.debug = DEBUG
+    if init:
+        _app_init(app)
+    return app
 
 
 app = Flask(__name__)
