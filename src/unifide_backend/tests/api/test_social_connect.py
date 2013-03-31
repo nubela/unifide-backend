@@ -38,7 +38,7 @@ class SocialConnectTests(TestBase):
         print json.dumps({"status": "ok", "page_list": page_list})
 
 
-    def _test_put_facebook_page(self):
+    def test_put_facebook_page(self):
         print "test_put_facebook_page"
         from unifide_backend.action.social.facebook.action import get_avail_slots, get_fb_user, get_fb_page_list, save_fb_page
 
@@ -70,7 +70,7 @@ class SocialConnectTests(TestBase):
 
         print get_fb_posts(page_id, get_fb_page(user_id, page_id).page_access_token)
 
-    def test_save_posts(self):
+    def _test_save_posts(self):
         print "test_save_posts"
         from unifide_backend.action.social.facebook.action import get_fb_posts, get_fb_page, save_fb_posts
 

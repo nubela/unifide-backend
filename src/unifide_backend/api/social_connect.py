@@ -1,6 +1,6 @@
 from flask.globals import request
 from flask.helpers import json, jsonify
-from unifide_backend.local_config import FB_APP_ID, FB_APP_SECRET, FB_REDIRECT_URI, FB_PERMS
+from unifide_backend.local_config import FB_APP_ID, FB_APP_SECRET, FB_REDIRECT_URI, FB_PERMS, FB_UPDATES_TOKEN
 
 
 def auth_facebook():
@@ -45,6 +45,37 @@ def connect_facebook():
     if fb_user is None:
         return jsonify({"status": "error",
                         "error": "Fail to save user access token"})
+
+    return jsonify({"status": "ok"})
+
+
+def get_facebook_updates():
+    """
+    (GET: social_connect/facebook/updates)
+    """
+    mode = request.args.get("hub.mode")
+    challenge = request.args.get("hub.challenge")
+    verify_token = request.args.get("hub.verify_token")
+
+    if verify_token != FB_UPDATES_TOKEN or mode != "subscribe":
+        return jsonify({"status": "error",
+                        "error": "Invalid verification token."})
+
+    return challenge
+
+
+def put_facebook_updates():
+    """
+    (POST: social_connect/facebook/updates)
+    """
+    from unifide_backend.action.social.facebook.action import page_realtime_update
+
+    data = json.loads(request.data)
+    object = data["object"]
+    entry = data["entry"]
+
+    if object == "page":
+        page_realtime_update(entry)
 
     return jsonify({"status": "ok"})
 
@@ -138,6 +169,12 @@ def _register_api(app):
 
     app.add_url_rule('/social_connect/facebook/',
         "connect_facebook", connect_facebook, methods=['PUT'])
+
+    app.add_url_rule('/social_connect/facebook/updates/',
+        "get_facebook_updates", get_facebook_updates, methods=['GET'])
+
+    app.add_url_rule('/social_connect/facebook/updates/',
+        "put_facebook_updates", put_facebook_updates, methods=['POST'])
 
     app.add_url_rule('/social_connect/facebook/page/',
         "get_facebook_pages", get_facebook_pages, methods=['GET'])
