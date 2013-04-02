@@ -13,10 +13,13 @@ FB_APP_ID = "336489173138188"
 FB_APP_SECRET = "b259ee37fdb0acb61feb1b1af0fdab57"
 FB_REDIRECT_URI = "http://127.0.0.1:5000/"
 FB_PERMS = ["manage_pages", "publish_stream"]
-FB_UPDATES_TOKEN = "thisisnotsecureatall1987"
+FB_REALTIME_TOKEN = "thisisnotsecureatall1987"
 
 #twitter app info
-
+TW_CONSUMER_KEY = "dB4v3wKk52LIRz6SRSZTJQ"
+TW_CONSUMER_SECRET = "IkfpGDZteinlSBY3iNKwrtuEarB6sZA8U6rbZXJ7h4U"
+TW_REDIRECT_URI = "http://127.0.0.1:5000/"
+ADD_USER_MAX_TWEET = 800
 
 #foursquare app info
 
@@ -24,7 +27,7 @@ FB_UPDATES_TOKEN = "thisisnotsecureatall1987"
 # API Packages to be enabled
 API_TO_REGISTER = (
     "social_connect",
-#    "friends",
+#    "account",
 )
 
 #facebook test user

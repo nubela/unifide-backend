@@ -15,7 +15,7 @@ def get_avail_slots(user_id):
     max_brand = get_max_brands(user_id)
     fbUser = get_fb_user(user_id)
 
-    return max_brand - len(fbUser.pages)
+    return max_brand - len(fbUser.pages if fbUser is not None else [])
 
 
 def save_fb_user(user_id, fb_id, access_token, token_expiry):
@@ -31,7 +31,7 @@ def save_fb_user(user_id, fb_id, access_token, token_expiry):
 
     # dupe check before inserting new fb user record into db
     fbUser_obj = FBUser.collection().find_one({"u_id": user_id, "fb_id": fb_id, "access_token": access_token})
-    if fbUser_obj.count is not None:
+    if fbUser_obj is not None:
         saved_fb_user_obj = FBUser.unserialize(fbUser_obj)
     else:
         saved_fb_user_obj = save_obj()

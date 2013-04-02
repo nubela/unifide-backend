@@ -2,7 +2,9 @@ from flask.helpers import json, jsonify
 import urllib
 from unifide_backend.tests.test_base import TestBase
 from unifide_backend.action.social.facebook.model import FBPage
-from unifide_backend.local_config import FB_APP_ID, FB_APP_SECRET, FB_REDIRECT_URI, FB_PERMS
+from unifide_backend.local_config import FB_APP_ID, FB_APP_SECRET, FB_REDIRECT_URI, FB_PERMS, \
+    TW_CONSUMER_KEY, TW_CONSUMER_SECRET, TW_REDIRECT_URI
+import tweepy
 
 
 class SocialConnectTests(TestBase):
@@ -38,7 +40,7 @@ class SocialConnectTests(TestBase):
         print json.dumps({"status": "ok", "page_list": page_list})
 
 
-    def test_put_facebook_page(self):
+    def _test_put_facebook_page(self):
         print "test_put_facebook_page"
         from unifide_backend.action.social.facebook.action import get_avail_slots, get_fb_user, get_fb_page_list, save_fb_page
 
@@ -70,6 +72,7 @@ class SocialConnectTests(TestBase):
 
         print get_fb_posts(page_id, get_fb_page(user_id, page_id).page_access_token)
 
+
     def _test_save_posts(self):
         print "test_save_posts"
         from unifide_backend.action.social.facebook.action import get_fb_posts, get_fb_page, save_fb_posts
@@ -82,6 +85,93 @@ class SocialConnectTests(TestBase):
         save_fb_posts(posts["data"], page_id)
 
 
+    def _test_auth_twitter(self):
+        print "test_auth_twitter"
 
+        auth = tweepy.OAuthHandler(TW_CONSUMER_KEY, TW_CONSUMER_SECRET, TW_REDIRECT_URI)
+
+        try:
+            redirect_url = auth.get_authorization_url()
+        except tweepy.TweepError:
+            print 'Error! Failed to get request token.'
+
+        assert redirect_url is not None
+        print "url: " + str(redirect_url)
+        print "token key: " + str(auth.request_token.key)
+        print "token secret: " + str(auth.request_token.secret)
+
+
+    def _test_connect_twitter(self):
+        print "test_connect_twitter"
+        from unifide_backend.action.social.twitter.action import save_tw_user
+
+        user_id = "xaa8LzkwtCCgb6BeP"
+        verifier = "dCEqbii65ERrisHvv0tkqvFlbQMPFEYaKzdDhQKSQbE"
+        token = "MhWHfcvBRAKsYLvcV8SOoZYeA1YI425U4AxBrxDAE"
+        token_secret = "YqlmXejvSuvTLVGclBxNpiEQWDUJE1fAI4L6UH3eT74"
+
+        auth = tweepy.OAuthHandler(TW_CONSUMER_KEY, TW_CONSUMER_SECRET)
+        auth.set_request_token(token, token_secret)
+
+        try:
+            auth.get_access_token(verifier)
+        except tweepy.TweepError:
+            print 'Error! Failed to get access token.'
+            assert False
+
+        tw_user = save_tw_user(user_id, auth.access_token.key, auth.access_token.secret)
+        if tw_user is None:
+            assert False
+
+        print "access token key: " + str(auth.access_token.key)
+        print "access token secret: " + str(auth.access_token.secret)
+
+
+    def _test_get_tweets(self):
+        print "test_get_tweets"
+        from unifide_backend.action.social.twitter.action import get_tweets
+
+        user_id = "xaa8LzkwtCCgb6BeP"
+        tw_id = "1130701424"
+
+        for status in get_tweets(user_id, tw_id):
+            print status.text
+            print status.user.name
+            print
+
+    def _test_save_tweets(self):
+        # get and save tweets
+        # set up streaming API to receive tweets
+        print "test_save_tweets"
+        from unifide_backend.action.social.twitter.action import save_tweets
+
+        user_id = "xaa8LzkwtCCgb6BeP"
+        tw_id = "1130701424"
+
+        save_tweets(user_id, tw_id)
+
+    def _test_rate_limit_status(self):
+        print "test_rate_limit_status"
+        from unifide_backend.action.social.twitter.action import get_tw_user, get_api
+
+        user_id = "xaa8LzkwtCCgb6BeP"
+        tw_id = "1130701424"
+
+        twUser = get_tw_user(user_id, tw_id)
+        api = get_api(twUser.token_key, twUser.token_secret)[0]
+
+        result = api.rate_limit_status(resources="statuses")["resources"]["statuses"]
+        for k, v in result.iteritems():
+            print k, v
+
+
+    def test_activate_stream(self):
+        print "test_activate_stream"
+        from unifide_backend.action.social.twitter.action import activate_stream
+
+        user_id = "xaa8LzkwtCCgb6BeP"
+        tw_id = "1130701424"
+
+        activate_stream(user_id, tw_id)
 
 

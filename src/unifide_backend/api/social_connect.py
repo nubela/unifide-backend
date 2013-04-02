@@ -1,6 +1,8 @@
 from flask.globals import request
 from flask.helpers import json, jsonify
-from unifide_backend.local_config import FB_APP_ID, FB_APP_SECRET, FB_REDIRECT_URI, FB_PERMS, FB_UPDATES_TOKEN
+from unifide_backend.local_config import FB_APP_ID, FB_APP_SECRET, FB_REDIRECT_URI, FB_PERMS, FB_REALTIME_TOKEN, \
+    TW_CONSUMER_KEY, TW_CONSUMER_SECRET, TW_REDIRECT_URI
+import tweepy
 
 
 def auth_facebook():
@@ -15,7 +17,8 @@ def auth_facebook():
     #auth check
     #to-do
 
-    return auth_url(FB_APP_ID, FB_REDIRECT_URI, FB_PERMS)
+    return jsonify({"status": "ok",
+                    "auth_url": auth_url(FB_APP_ID, FB_REDIRECT_URI, FB_PERMS)})
 
 
 def connect_facebook():
@@ -57,7 +60,7 @@ def get_facebook_updates():
     challenge = request.args.get("hub.challenge")
     verify_token = request.args.get("hub.verify_token")
 
-    if verify_token != FB_UPDATES_TOKEN or mode != "subscribe":
+    if verify_token != FB_REALTIME_TOKEN or mode != "subscribe":
         return jsonify({"status": "error",
                         "error": "Invalid verification token."})
 
@@ -137,12 +140,59 @@ def put_facebook_page():
     return jsonify({"status": "ok"})
 
 
+def auth_twitter():
+    """
+    (GET: social_connect/twitter/auth)
+    """
+
+    verb = "get"
+    noun = "social_connect/twitter/auth"
+
+    auth = tweepy.OAuthHandler(TW_CONSUMER_KEY, TW_CONSUMER_SECRET, TW_REDIRECT_URI)
+
+    try:
+        redirect_url = auth.get_authorization_url()
+    except tweepy.TweepError:
+        print 'Error! Failed to get request token.'
+        return jsonify({"status": "error",
+                        "error": "Failed to get request token."})
+
+    return jsonify({"status": "ok",
+                    "auth_url": redirect_url,
+                    "request_token": {"oauth_token": auth.request_token.key,
+                                      "oauth_token_secret": auth.request_token.secret}})
+
+
 def connect_twitter():
     """
     (PUT: social_connect/twitter)
     """
+    from unifide_backend.action.social.twitter.action import save_tw_user
 
-    return "twitter"
+    verb = "put"
+    noun = "social_connect/twitter"
+
+    user_id = request.form.get("user_id")
+    verifier = request.form.get("oauth_verifier")
+    token = request.form.get("oauth_token")
+    token_secret = request.form.get("oauth_token_secret")
+
+    auth = tweepy.OAuthHandler(TW_CONSUMER_KEY, TW_CONSUMER_SECRET)
+    auth.set_request_token(token, token_secret)
+
+    try:
+        auth.get_access_token(verifier)
+    except tweepy.TweepError:
+        print 'Error! Failed to get access token.'
+        return jsonify({"status": "error",
+                        "error": "Failed to get access token"})
+
+    tw_user = save_tw_user(user_id, auth.access_token.key, auth.access_token.secret)
+    if tw_user is None:
+        return jsonify({"status": "error",
+                        "error": "Failed to save twitter user"})
+
+    return jsonify({"status": "ok"})
 
 
 def connect_foursquare():
@@ -181,6 +231,9 @@ def _register_api(app):
 
     app.add_url_rule('/social_connect/facebook/page/',
         "put_facebook_page", put_facebook_page, methods=['PUT'])
+
+    app.add_url_rule('/social_connect/twitter/auth/',
+        "auth_twitter", auth_twitter, methods=['GET'])
 
     app.add_url_rule('/social_connect/twitter/',
         "connect_twitter", connect_twitter, methods=['PUT'])
