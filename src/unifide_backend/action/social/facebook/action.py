@@ -9,7 +9,7 @@ from unifide_backend.action.social.facebook.model import FBUser, FBPage, FBPost,
 from unifide_backend.action.admin.user.action import get_max_brands
 from bson.objectid import ObjectId
 from threading import Thread
-from unifide_backend.action.util import unix_time
+from unifide_backend.action.util import unix_time, key_check
 
 def get_avail_slots(user_id):
     max_brand = get_max_brands(user_id)
@@ -191,10 +191,6 @@ def save_fb_posts(posts, page_id):
 
 def get_fb_events():
     pass
-
-
-def key_check(dict, key):
-    return dict[key] if key in dict else None
 
 
 def page_realtime_update(entry):

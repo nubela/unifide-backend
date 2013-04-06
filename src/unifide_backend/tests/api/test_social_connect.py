@@ -165,7 +165,7 @@ class SocialConnectTests(TestBase):
             print k, v
 
 
-    def test_activate_stream(self):
+    def _test_activate_stream(self):
         print "test_activate_stream"
         from unifide_backend.action.social.twitter.action import activate_stream
 
@@ -175,3 +175,33 @@ class SocialConnectTests(TestBase):
         activate_stream(user_id, tw_id)
 
 
+    def _test_auth_foursquare(self):
+        print "test_auth_foursquare"
+        from unifide_backend.action.social.foursquare.action import get_auth_url
+
+        assert get_auth_url() is not None
+        print get_auth_url()
+
+    def _test_connect_foursquare(self):
+        print "test_connect_foursquare"
+        from unifide_backend.action.social.foursquare.action import get_access_token_from_fsq, save_fsq_user
+
+        user_id = "xaa8LzkwtCCgb6BeP"
+        code = "GHBWA21LLHMTGG4NOZEYZ0NHC3BT1CP0MERIJUPF0Y0OYF50"
+
+        fsq_user_obj = save_fsq_user(user_id, get_access_token_from_fsq(code))
+
+        assert fsq_user_obj is not None
+
+
+    def _test_add_foursquare_venue(self):
+        print "test_add_foursquare_venue"
+        import foursquare
+        from unifide_backend.action.social.foursquare.action import get_fsq_user, get_api
+
+        user_id = "xaa8LzkwtCCgb6BeP"
+        user = get_fsq_user(user_id)
+        client = get_api()
+        client.set_access_token(user.access_token)
+
+        print client.venues.add(params={"name": "HubQuarters", "address": "2 Orchard Link #04-01", "zip": "237978", "ll": "1.29103,103.83534"})

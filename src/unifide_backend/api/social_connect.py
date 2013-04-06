@@ -148,6 +148,9 @@ def auth_twitter():
     verb = "get"
     noun = "social_connect/twitter/auth"
 
+    #auth check
+    #to-do
+
     auth = tweepy.OAuthHandler(TW_CONSUMER_KEY, TW_CONSUMER_SECRET, TW_REDIRECT_URI)
 
     try:
@@ -172,6 +175,9 @@ def connect_twitter():
     verb = "put"
     noun = "social_connect/twitter"
 
+    #auth check
+    #to-do
+
     user_id = request.form.get("user_id")
     verifier = request.form.get("oauth_verifier")
     token = request.form.get("oauth_token")
@@ -195,12 +201,78 @@ def connect_twitter():
     return jsonify({"status": "ok"})
 
 
+def auth_foursquare():
+    """
+    (GET: social_connect/foursquare)
+    """
+    from unifide_backend.action.social.foursquare.action import get_auth_url
+
+    verb = "get"
+    noun = "social_connect/foursquare"
+
+    #auth check
+    #to-do
+
+    return jsonify({"status": "ok",
+                    "auth_url": get_auth_url()})
+
+
 def connect_foursquare():
     """
     (PUT: social_connect/foursquare)
     """
+    from unifide_backend.action.social.foursquare.action import get_access_token_from_fsq, save_fsq_user
 
-    return "foursquare"
+    verb = "put"
+    noun = "social_connect/foursquare"
+
+    #req_vars
+    user_id = request.form.get("user_id")
+    code = request.form.get("code")
+
+    #auth check
+    #to-do
+
+    try:
+        fsq_user_obj = save_fsq_user(user_id, get_access_token_from_fsq(code))
+    except:
+        return jsonify({"status": "error",
+                        "error": "Failed to save foursquare user."})
+
+    return jsonify({"status": "ok"})
+
+
+def get_foursquare_venue():
+    """
+    (GET: social_connect/foursquare/venue)
+    """
+
+    verb = "get"
+    noun = "social_connect/foursquare/venue"
+
+    #req_vars
+    user_id = request.form.get("user_id")
+
+
+
+    return json({"status": "ok",
+                 "venues": ""})
+
+
+def put_foursquare_venue():
+    """
+    (PUT: social_connect/foursquare/venue)
+    """
+
+    verb = "put"
+    noun = "social_connect/foursquare/venue"
+
+    #req_vars
+    user_id = request.form.get("user_id")
+    venue_id = request.form.get("venue_id")
+
+    return jsonify({"status": "ok"})
+
 
 def google_alerts():
     """
@@ -208,6 +280,7 @@ def google_alerts():
     """
 
     return "google alerts"
+
 
 def _register_api(app):
     """
@@ -238,8 +311,14 @@ def _register_api(app):
     app.add_url_rule('/social_connect/twitter/',
         "connect_twitter", connect_twitter, methods=['PUT'])
 
+    app.add_url_rule('social_connect/foursquare/',
+        "auth_foursquare", auth_foursquare, methods=['GET'])
+
     app.add_url_rule('/social_connect/foursquare/',
         "connect_foursquare", connect_foursquare, methods=['PUT'])
+
+    app.add_url_rule('/social_connect/foursquare/venue/',
+        "put_foursquare_venue", put_foursquare_venue, methods=['PUT'])
 
     app.add_url_rule('/social_connect/google_alerts/',
         "google_alerts", google_alerts, methods=['PUT'])
