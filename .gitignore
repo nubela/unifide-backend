@@ -15,7 +15,7 @@ src/.idea*
 .idea*
 articles
 base
-campaigns
+/campaigns
 comments
 ecommerce
 orders
