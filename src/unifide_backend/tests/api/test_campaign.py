@@ -3,8 +3,8 @@ import urllib
 from unifide_backend.tests.test_base import TestBase
 from campaigns.campaign.model import Campaign
 from campaigns.campaign.action import save
-from unifide_backend.action.campaigns.action import put_mapping
-
+from unifide_backend.action.mapping.action import put_mapping, get_mapping
+import datetime
 
 class CampaignTests(TestBase):
     def test_put_campaign_data(self):
@@ -21,7 +21,8 @@ class CampaignTests(TestBase):
         c._id = save(c)
 
         kvp = {}
-        kvp["web"] = c._id
+        kvp["campaign_list"] = c._id
 
-        c_obj = put_mapping(user_id, kvp)
-        assert c_obj is not None
+        mapping_obj = put_mapping(user_id, kvp, datetime.datetime.now())
+
+        assert mapping_obj is not None
