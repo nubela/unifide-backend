@@ -7,7 +7,29 @@ def put_campaign_media():
 
 
 def put_campaign_data():
-    pass
+    from campaigns.campaign.model import Campaign
+    from campaigns.campaign.action import save
+    from unifide_backend.action.campaigns.action import put_mapping
+
+    user_id = request.form.get("user_id")
+    title = request.form.get("title")
+    description = request.form.get("description")
+    type = request.form.get("type")
+    datetime = request.form.get("datetime")
+    place = request.form.get("place")
+
+    c = Campaign()
+    c.title = title
+    c.description = description
+    c.type = type
+    c._id = save(c)
+
+    kvp = {}
+    kvp["web"] = c._id
+
+    put_mapping(user_id, kvp)
+
+    return jsonify({"status": "ok"})
 
 
 def update_campaign_data():

@@ -311,7 +311,7 @@ def _register_api(app):
     app.add_url_rule('/social_connect/twitter/',
         "connect_twitter", connect_twitter, methods=['PUT'])
 
-    app.add_url_rule('social_connect/foursquare/',
+    app.add_url_rule('/social_connect/foursquare/',
         "auth_foursquare", auth_foursquare, methods=['GET'])
 
     app.add_url_rule('/social_connect/foursquare/',

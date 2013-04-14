@@ -3,6 +3,7 @@
 #===============================================================================
 from flask import Flask
 from local_config import API_TO_REGISTER, LOG_FILE, DEBUG
+from unifide_backend.action.cp.action import init_cp_menu
 import api
 
 def _app_init(app):
@@ -29,6 +30,7 @@ def _app_init(app):
 
 def _app_init(app):
     init_app(app)
+    init_cp_menu()
 
     if app.config['DEBUG']:
         from werkzeug.wsgi import SharedDataMiddleware
