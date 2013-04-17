@@ -108,13 +108,15 @@ def put_facebook_page():
     """
     (PUT: social_connect/facebook/page)
     """
-    from unifide_backend.action.social.facebook.action import get_avail_slots, get_fb_user, get_fb_page_list, save_fb_page
+    from unifide_backend.action.mapping.action import get_brand_available_slots
+    from unifide_backend.action.social.facebook.action import get_fb_user, get_fb_page_list, save_fb_page
 
     verb = "put"
     noun = "social_connect/facebook/page"
 
     #req_vars
     user_id = request.form.get("user_id")
+    brand_id = request.form.get("brand_id")
     fb_page_id = request.form.get("page_id")
 
     #auth check
@@ -122,15 +124,14 @@ def put_facebook_page():
 
     fbUser = get_fb_user(user_id)
 
-    if fbUser is not None and get_avail_slots(user_id) == 0:
+    if fbUser is not None and get_brand_available_slots(user_id, "facebook") == 0:
         return jsonify({"status": "error",
                         "error": "Exceeded business subscription limit."})
 
     page_list = get_fb_page_list(fbUser.fb_id, fbUser.access_token)
     for page in page_list:
         if page["id"] == fb_page_id:
-            fbPage_obj = save_fb_page(fbUser.u_id, fbUser.fb_id, page["name"],
-                                      page["id"], page["category"], page["access_token"])
+            fbPage_obj = save_fb_page(fbUser, page, brand_id)
             break
 
     if fbPage_obj is None:

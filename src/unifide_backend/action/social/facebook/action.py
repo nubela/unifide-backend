@@ -10,12 +10,7 @@ from unifide_backend.action.admin.user.action import get_max_brands
 from bson.objectid import ObjectId
 from threading import Thread
 from unifide_backend.action.util import unix_time, key_check
-
-def get_avail_slots(user_id):
-    max_brand = get_max_brands(user_id)
-    fbUser = get_fb_user(user_id)
-
-    return max_brand - len(fbUser.pages if fbUser is not None else [])
+from unifide_backend.action.mapping.action import add_brand_mapping
 
 
 def save_fb_user(user_id, fb_id, access_token, token_expiry):
@@ -62,30 +57,26 @@ def get_fb_page_list(user_id, access_token):
     return GraphAPI(access_token).request(url)["data"]
 
 
-def save_fb_page(u_id, fb_id, page_name, page_id, page_category, page_token):
+def save_fb_page(fbUser_obj, page_obj, brand_id):
 
     def save_obj():
         fbPage_obj = FBPage()
-        fbPage_obj.page_id = page_id
-        fbPage_obj.name = page_name
-        fbPage_obj.category = page_category
-        fbPage_obj.page_access_token = page_token
+        fbPage_obj.page_id = page_obj["id"]
+        fbPage_obj.name = page_obj["name"]
+        fbPage_obj.category = page_obj["category"]
+        fbPage_obj.page_access_token = page_obj["access_token"]
         fbPage_obj._id = FBPage.collection().insert(fbPage_obj.serialize())
         return fbPage_obj
 
-    fbPage_obj = FBPage.collection().find_one({"page_id": page_id, "page_access_token": page_token})
+    fbPage_obj = FBPage.collection().find_one({"page_id": page_obj["id"], "page_access_token": page_obj["access_token"]})
     if fbPage_obj is not None:
         saved_fbPage_obj = FBPage.unserialize(fbPage_obj)
     else:
         saved_fbPage_obj = save_obj()
 
-    if FBUser.collection().find_one({"u_id": u_id, "fb_id": fb_id, "pages": {"$exists": "true", "$in": [page_token]}}) is None:
-        FBUser.collection().update({"u_id": u_id, "fb_id": fb_id},
-                                   {"$push":
-                                        {"pages": page_token}
-                                   })
+    add_brand_mapping(fbUser_obj.u_id, brand_id, "facebook", page_obj["id"])
 
-    t = Thread(target=load_fb_page_to_db, args=(page_id, u_id))
+    t = Thread(target=load_fb_page_to_db, args=(page_obj["id"], fbUser_obj))
     t.setDaemon(False)
     t.start()
 
@@ -238,3 +229,28 @@ def get_comment_from_fb(comment_obj, page_id):
     url = "%s" % (comment_obj.id)
     page = FBPage.unserialize(FBPage.collection().find_one({"page_id": page_id}))
     return GraphAPI(page.page_access_token).request(url)
+
+
+def put_fb_post(page, message, attachment={}, is_published=True):
+
+    p = FBPost()
+    p.message = message
+    print page
+
+    def publish():
+        api = GraphAPI(page["access_token"])
+        return api.put_wall_post(message, profile_id=page["page_id"])["id"]
+
+    def save(post):
+        return FBPost.collection().insert(post.serialize())
+
+    if is_published:
+        p.post_id = publish()
+        if p.post_id is not None:
+            p._id = save(p)
+        else:
+            return None
+    else:
+        p._id = save(p)
+
+    return p

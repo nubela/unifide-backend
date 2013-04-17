@@ -35,13 +35,7 @@ BASE_MENU = [
                       {"name": "RESERVATIONS", "link": "/reservation", "order": "2"},
                       {"name": "divider", "link": "", "order": "3"},
                       {"name": "ITEMS", "link": "/items", "order": "4"}
-                  ]},
-            {"order": 3,
-             "name": "ACCOUNT",
-             "sub-menu":
-                 [
-                     {"name": "UPDATE ACCOUNT", "link": "/account", "order": "0"}
-                 ]}
+                  ]}
             ]
 
 def init_cp_menu():
