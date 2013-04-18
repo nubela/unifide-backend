@@ -62,3 +62,11 @@ def get_brand_available_slots(user_id, platform):
 def update_brand_mapping(user_id, brand_id, platform, platform_id=None):
     BrandMapping.collection().update({"uid": user_id, "_id": coerce_bson_id(brand_id)}, {"$set": {platform: platform_id}})
 
+
+def put_new_user_mapping(user_id):
+    brand_mapping_obj = BrandMapping()
+    brand_mapping_obj.uid = user_id
+    brand_mapping_obj.brand_name = "default"
+    brand_mapping_obj.is_selected = 1
+    brand_mapping_obj._id = BrandMapping.collection().insert(brand_mapping_obj.serialize())
+    return brand_mapping_obj

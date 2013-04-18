@@ -38,6 +38,7 @@ BASE_MENU = [
                   ]}
             ]
 
+
 def init_cp_menu():
     dic_list = User.collection().find() if User.collection().find() is not None else []
 
@@ -59,3 +60,22 @@ def init_cp_menu():
                     menu.second_lvl.append(sub_menu.serialize())
 
                 menu._id = CPMenu.collection().insert(menu.serialize())
+
+
+def put_new_user_menu(user_id):
+    for item in BASE_MENU:
+        menu = CPMenu()
+        menu.uid = user_id
+        menu.order = item["order"]
+        menu.first_lvl = item["name"]
+
+        for val in item["sub-menu"]:
+            sub_menu = CPMenuItem()
+            sub_menu.name = val["name"]
+            sub_menu.link = val["link"]
+            sub_menu.order = val["order"]
+            menu.second_lvl.append(sub_menu.serialize())
+
+        menu._id = CPMenu.collection().insert(menu.serialize())
+
+    return menu
