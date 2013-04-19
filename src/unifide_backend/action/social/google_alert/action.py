@@ -1,5 +1,8 @@
+from datetime import datetime
+from time import mktime
+import feedparser
 import galerts
-from unifide_backend.action.social.google_alert.model import Keyword
+from unifide_backend.action.social.google_alert.model import Keyword, Mention
 from unifide_backend.action.util import readable, generator_to_list
 from unifide_backend.local_config import GOOGLE_USERNAME, GOOGLE_PASSWD_ENCODED
 
@@ -8,7 +11,9 @@ def get_keywords():
     """
     Gets all registered keywords
     """
-    pass
+    gam = _gam()
+    alerts = generator_to_list(_gam().alerts)
+    return [x.query for x in alerts]
 
 
 def _get_alert_from_keyword(kw):
@@ -59,7 +64,6 @@ def get_mentions(limit=None):
     """
     if limit is None:
         limit = 5
-
     pass
 
 
@@ -67,7 +71,32 @@ def _update():
     """
     Polls the feeds to fetch the latest mentions
     """
-    pass
+    coll = Keyword.collection()
+    keyword_obj_lis = [Keyword.unserialize(x) for x in coll.find()]
+    for keyword in keyword_obj_lis:
+        d = feedparser.parse(keyword.feed_url)
+        for entry in d["entries"]:
+            if get_mention_by_alert_id(entry["id"]) is None and entry["title"] != "Feeds for Google Alerts":
+                _save_mention(entry)
+
+
+def get_mention_by_alert_id(alert_id):
+    coll = Keyword.collection()
+    dic = coll.find_one({
+        "alert_id": alert_id
+    })
+    return Mention.unserialize(dic) if dic is not None else None
+
+
+def _save_mention(feed_entry):
+    coll = Mention.collection()
+    mention_obj = Mention()
+    mention_obj.url = feed_entry["link"]
+    mention_obj.summary = feed_entry["summary"]
+    mention_obj.title = feed_entry["title"]
+    mention_obj.alert_id = feed_entry["id"]
+    mention_obj.modification_timestamp_utc = datetime.fromtimestamp(mktime(feed_entry["published_parsed"]))
+    coll.save(mention_obj.serialize())
 
 
 class AlertCreationStatus:

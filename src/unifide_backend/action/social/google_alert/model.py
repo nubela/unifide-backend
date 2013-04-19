@@ -21,12 +21,14 @@ class Keyword(Base):
         return "keyword"
 
 
-class Alert(Base):
+class Mention(Base):
     def __init__(self, **kwargs):
-        super(Alert, self).__init__()
+        super(Mention, self).__init__()
 
+        self.alert_id = None
         self.url = None
         self.title = None
+        self.summary = None
         self.keyword = None
 
         for k, v in kwargs.iteritems():
@@ -34,8 +36,8 @@ class Alert(Base):
 
     @staticmethod
     def unserialize(dic):
-        return Alert(**dic)
+        return Mention(**dic)
 
     @staticmethod
     def coll_name():
-        return "alert"
+        return "mention"
