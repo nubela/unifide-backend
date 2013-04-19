@@ -10,7 +10,6 @@ from unifide_backend.action.admin.user.action import get_max_brands
 from bson.objectid import ObjectId
 from threading import Thread
 from unifide_backend.action.util import unix_time, key_check
-from unifide_backend.action.mapping.action import add_brand_mapping
 
 
 def save_fb_user(user_id, fb_id, access_token, token_expiry):

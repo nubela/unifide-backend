@@ -280,7 +280,7 @@ def google_alerts():
     (PUT: social_connect/google_alerts)
     """
 
-    return "google alerts"
+    return "google_alert alerts"
 
 
 def _register_api(app):

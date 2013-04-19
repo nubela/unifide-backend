@@ -36,3 +36,7 @@ API_TO_REGISTER = (
 #facebook test user
 FB_TEST_USER = ""
 FB_TEST_PASSWORD = ""
+
+#google_alert alerts info
+GOOGLE_USERNAME = 'unifidetest@gmail.com'
+GOOGLE_PASSWD_ENCODED = 'BZh91AY&SYE\xf2\x04j\x00\x00\x08\x81\x80*e\x9e\x00 \x001\x03@\xd0"`\xd4\xcc\x86[L\x88\xbc\x8d@\xb0\tp\xbb\x92)\xc2\x84\x82/\x90#P'
