@@ -10,15 +10,16 @@ from unifide_backend.action.admin.user.action import get_max_brands
 from bson.objectid import ObjectId
 from threading import Thread
 from unifide_backend.action.util import unix_time, key_check
-from unifide_backend.action.mapping.action import add_brand_mapping
+from unifide_backend.action.mapping.action import update_brand_mapping
 
 
-def save_fb_user(user_id, fb_id, access_token, token_expiry):
+def save_fb_user(user_id, brand_name, fb_id, access_token, token_expiry):
 
     def save_obj():
         fbUser_obj = FBUser()
         fbUser_obj.u_id = user_id
         fbUser_obj.fb_id = fb_id
+        fbUser_obj.brand_name = brand_name
         fbUser_obj.access_token = access_token
         fbUser_obj.expires = token_expiry
         fbUser_obj._id = FBUser.collection().insert(fbUser_obj.serialize())
@@ -34,8 +35,8 @@ def save_fb_user(user_id, fb_id, access_token, token_expiry):
     return saved_fb_user_obj
 
 
-def get_fb_user(user_id):
-    dic = FBUser.collection().find_one({"u_id": user_id})
+def get_fb_user(user_id, brand_name):
+    dic = FBUser.collection().find_one({"u_id": user_id, "brand_name": brand_name})
     return FBUser.unserialize(dic) if dic is not None else None
 
 
@@ -57,30 +58,40 @@ def get_fb_page_list(user_id, access_token):
     return GraphAPI(access_token).request(url)["data"]
 
 
-def save_fb_page(fbUser_obj, page_obj, brand_id):
+def put_fb_page(fb_user_obj, brand_name, page_obj):
 
     def save_obj():
         fbPage_obj = FBPage()
         fbPage_obj.page_id = page_obj["id"]
         fbPage_obj.name = page_obj["name"]
         fbPage_obj.category = page_obj["category"]
-        fbPage_obj.page_access_token = page_obj["access_token"]
         fbPage_obj._id = FBPage.collection().insert(fbPage_obj.serialize())
         return fbPage_obj
 
-    fbPage_obj = FBPage.collection().find_one({"page_id": page_obj["id"], "page_access_token": page_obj["access_token"]})
-    if fbPage_obj is not None:
-        saved_fbPage_obj = FBPage.unserialize(fbPage_obj)
+    fb_page_obj = FBPage.collection().find_one({"page_id": page_obj["id"]})
+    if fb_page_obj is not None:
+        saved_fbPage_obj = FBPage.unserialize(fb_page_obj)
     else:
         saved_fbPage_obj = save_obj()
 
-    add_brand_mapping(fbUser_obj.u_id, brand_id, "facebook", page_obj["id"])
+    update_brand_mapping(fb_user_obj.u_id, brand_name, "facebook", page_obj["id"], page_obj["access_token"]);
 
-    t = Thread(target=load_fb_page_to_db, args=(page_obj["id"], fbUser_obj))
+    """
+    t = Thread(target=load_fb_page_to_db, args=(page_obj["id"], fb_user_obj))
     t.setDaemon(False)
     t.start()
+    """
 
     return saved_fbPage_obj
+
+
+def del_fb_user(user_id, brand_name):
+    del_fb_page(user_id, brand_name)
+    FBUser.collection().remove({"u_id": user_id, "brand_name": brand_name})
+
+
+def del_fb_page(user_id, brand_name):
+    update_brand_mapping(user_id, brand_name, "facebook")
 
 
 def load_fb_page_to_db(page_id, user_id):

@@ -59,8 +59,11 @@ def get_brand_available_slots(user_id, platform):
     return avail_max_brands
 
 
-def update_brand_mapping(user_id, brand_id, platform, platform_id=None):
-    BrandMapping.collection().update({"uid": user_id, "_id": coerce_bson_id(brand_id)}, {"$set": {platform: platform_id}})
+def update_brand_mapping(user_id, brand_name, platform, platform_id=None, access_token=None):
+    if platform_id is None and access_token is None:
+        BrandMapping.collection().update({"uid": user_id, "brand_name": brand_name}, {"$set": {platform: None}})
+    else:
+        BrandMapping.collection().update({"uid": user_id, "brand_name": brand_name}, {"$set": {platform: {"id": platform_id, "access_token": access_token}}})
 
 
 def put_new_user_mapping(user_id):

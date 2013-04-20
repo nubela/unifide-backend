@@ -1,3 +1,9 @@
+"""
+    - Each social account is tagged to a user's brand/business
+    - All requests should have user_id and brand_name to differentiate
+      which social account to use based on brand/business
+"""
+
 from flask.globals import request
 from flask.helpers import json, jsonify
 from unifide_backend.local_config import FB_APP_ID, FB_APP_SECRET, FB_REDIRECT_URI, FB_PERMS, FB_REALTIME_TOKEN, \
@@ -14,11 +20,15 @@ def auth_facebook():
     verb = "get"
     noun = "social_connect/facebook/auth"
 
+    #req_vars
+    platform = request.args.get("platform")
+    brand = request.args.get("brand_name")
+
     #auth check
     #to-do
 
     return jsonify({"status": "ok",
-                    "auth_url": auth_url(FB_APP_ID, FB_REDIRECT_URI, FB_PERMS)})
+                    "auth_url": auth_url(FB_APP_ID, FB_REDIRECT_URI, FB_PERMS, state=platform + "," + brand)})
 
 
 def connect_facebook():
@@ -35,15 +45,17 @@ def connect_facebook():
     #req_vars
     user_id = request.form.get("user_id")
     facebook_code = request.form.get("code")
+    brand_name = request.form.get("brand_name")
 
     #auth check
     #to-do
 
     user = get_user(user_id)
     result = get_access_token_from_code(facebook_code, FB_REDIRECT_URI, FB_APP_ID, FB_APP_SECRET)
-    access_token, token_expiry = result["access_token"], result["expires"]
+    access_token = result["access_token"]
+    token_expiry = result["expires"] if "expires" in result else None
     fb_id = get_fb_id(access_token)
-    fb_user = save_fb_user(user.get_id(), fb_id, access_token, token_expiry)
+    fb_user = save_fb_user(user.get_id(), brand_name, fb_id, access_token, token_expiry)
 
     if fb_user is None:
         return jsonify({"status": "error",
@@ -94,11 +106,12 @@ def get_facebook_pages():
 
     #req_vars
     user_id = request.args.get("user_id")
+    brand_name = request.args.get("brand_name")
 
     #auth check
     #to-do
 
-    fbUser = get_fb_user(user_id)
+    fbUser = get_fb_user(user_id, brand_name)
 
     return jsonify({"status": "ok",
                     "page_list": get_fb_page_list(fbUser.fb_id, fbUser.access_token)})
@@ -108,35 +121,60 @@ def put_facebook_page():
     """
     (PUT: social_connect/facebook/page)
     """
-    from unifide_backend.action.mapping.action import get_brand_available_slots
-    from unifide_backend.action.social.facebook.action import get_fb_user, get_fb_page_list, save_fb_page
+    from unifide_backend.action.social.facebook.action import get_fb_user, get_fb_page_list, put_fb_page
 
     verb = "put"
     noun = "social_connect/facebook/page"
 
     #req_vars
     user_id = request.form.get("user_id")
-    brand_id = request.form.get("brand_id")
+    brand_name = request.form.get("brand_name")
     fb_page_id = request.form.get("page_id")
 
     #auth check
     #to-do
 
-    fbUser = get_fb_user(user_id)
-
-    if fbUser is not None and get_brand_available_slots(user_id, "facebook") == 0:
-        return jsonify({"status": "error",
-                        "error": "Exceeded business subscription limit."})
+    fbUser = get_fb_user(user_id, brand_name)
 
     page_list = get_fb_page_list(fbUser.fb_id, fbUser.access_token)
     for page in page_list:
         if page["id"] == fb_page_id:
-            fbPage_obj = save_fb_page(fbUser, page, brand_id)
+            fb_page_obj = put_fb_page(fbUser, brand_name, page)
             break
 
-    if fbPage_obj is None:
+    if fb_page_obj is None:
         return jsonify(({"status": "error",
                          "error": "Fail to save page access token"}))
+
+    return jsonify({"status": "ok"})
+
+
+def del_facebook_user():
+    """
+    (DELETE: social_connect/facebook/user)
+    """
+    from unifide_backend.action.social.facebook.action import del_fb_user
+
+    #req_vars
+    user_id = request.args.get("user_id")
+    brand_name = request.args.get("brand_name")
+
+    del_fb_user(user_id, brand_name)
+
+    return jsonify({"status": "ok"})
+
+
+def del_facebook_page():
+    """
+    (DELETE: social_connect/facebook/page
+    """
+    from unifide_backend.action.social.facebook.action import del_fb_page
+
+    #req_vars
+    user_id = request.args.get("user_id")
+    brand_name = request.args.get("brand_name")
+
+    del_fb_page(user_id, brand_name)
 
     return jsonify({"status": "ok"})
 
@@ -305,6 +343,12 @@ def _register_api(app):
 
     app.add_url_rule('/social_connect/facebook/page/',
         "put_facebook_page", put_facebook_page, methods=['PUT'])
+
+    app.add_url_rule('/social_connect/facebook/user/',
+        "del_facebook_user", del_facebook_user, methods=['DELETE'])
+
+    app.add_url_rule('/social_connect/facebook/page/',
+        "del_facebook_page", del_facebook_page, methods=['DELETE'])
 
     app.add_url_rule('/social_connect/twitter/auth/',
         "auth_twitter", auth_twitter, methods=['GET'])

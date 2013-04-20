@@ -5,9 +5,9 @@ class FBUser(Base):
     def __init__(self, **kwargs):
         self.u_id = None
         self.fb_id = None
+        self.brand_name = None
         self.access_token = None
         self.expires = None
-        self.pages = []
 
         for k, v in kwargs.iteritems():
             setattr(self, k, v)
@@ -29,7 +29,6 @@ class FBPage(Base):
         self.page_id = None
         self.name = None
         self.category = None
-        self.page_access_token = None
         self.is_published = None
         self.likes = None
         self.location = None
