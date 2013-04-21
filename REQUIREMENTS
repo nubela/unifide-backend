@@ -5,3 +5,4 @@ galerts==0.2.4
 feedparser==5.1.3
 Flask==0.9
 pymongo==2.5
+py-lorem==1.2
