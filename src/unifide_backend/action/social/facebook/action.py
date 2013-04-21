@@ -5,12 +5,13 @@
 from flask.helpers import json
 from unifide_backend.local_config import FB_APP_ID
 from unifide_backend.action.social.facebook.sdk import GraphAPI
-from unifide_backend.action.social.facebook.model import FBUser, FBPage, FBPost, _FBUser, FBComment
-from unifide_backend.action.admin.user.action import get_max_brands
+from unifide_backend.action.social.facebook.model import FBUser, FBPage, FBPost, FBComment
 from bson.objectid import ObjectId
+from base.util import coerce_bson_id
 from threading import Thread
 from unifide_backend.action.util import unix_time, key_check
 from unifide_backend.action.mapping.action import update_brand_mapping
+from unifide_backend.action.mapping.model import BrandMapping
 
 
 def save_fb_user(user_id, brand_name, fb_id, access_token, token_expiry):
@@ -59,30 +60,33 @@ def get_fb_page_list(user_id, access_token):
 
 
 def put_fb_page(fb_user_obj, brand_name, page_obj):
+    url = "%s" % (page_obj["id"])
+    page_data = GraphAPI(page_obj["access_token"]).request(url)
 
-    def save_obj():
-        fbPage_obj = FBPage()
-        fbPage_obj.page_id = page_obj["id"]
-        fbPage_obj.name = page_obj["name"]
-        fbPage_obj.category = page_obj["category"]
-        fbPage_obj._id = FBPage.collection().insert(fbPage_obj.serialize())
-        return fbPage_obj
+    fb_page = FBPage()
+    fb_page.page_id = page_data["id"]
+    fb_page.name = page_data["name"]
+    page_data.pop("id", None)
+    page_data.pop("name", None)
+    fb_page.fields = page_data
 
-    fb_page_obj = FBPage.collection().find_one({"page_id": page_obj["id"]})
-    if fb_page_obj is not None:
-        saved_fbPage_obj = FBPage.unserialize(fb_page_obj)
+    def save_obj(page):
+        return FBPage.collection().save(page.serialize())
+
+    dupe_obj = FBPage.collection().find_one({"page_id": page_obj["id"]})
+    if dupe_obj is None:
+        fb_page._id = save_obj(fb_page)
     else:
-        saved_fbPage_obj = save_obj()
+        FBPage.collection().update({"page_id": page_obj["id"]}, fb_page.serialize())
+        fb_page = FBPage.unserialize(FBPage.collection().find_one({"page_id": page_obj["id"]}))
 
     update_brand_mapping(fb_user_obj.u_id, brand_name, "facebook", page_obj["id"], page_obj["access_token"]);
 
-    """
-    t = Thread(target=load_fb_page_to_db, args=(page_obj["id"], fb_user_obj))
+    t = Thread(target=load_fb_page_to_db, args=(page_obj["id"], page_obj["access_token"]))
     t.setDaemon(False)
     t.start()
-    """
 
-    return saved_fbPage_obj
+    return fb_page
 
 
 def del_fb_user(user_id, brand_name):
@@ -94,29 +98,19 @@ def del_fb_page(user_id, brand_name):
     update_brand_mapping(user_id, brand_name, "facebook")
 
 
-def load_fb_page_to_db(page_id, user_id):
-    page = get_fb_page(user_id, page_id)
-    posts = get_fb_posts(page_id, page.page_access_token)
-    save_fb_posts(posts["data"], page_id)
+def load_fb_page_to_db(page_id, page_access_token):
+    posts = get_fb_posts(page_id, page_access_token)
+    for post in posts["data"]:
+        save_fb_post(post, page_id)
 
-    if subscribe_fb_updates(page) == True:
-        print "Facebook Realtime Updates (" + str(page_id) + ") successful."
-    else:
-        print "Facebook Realtime Updates (" + str(page_id) + ") unsuccessful."
+    result = subscribe_fb_updates(page_id, page_access_token)
+    print "Facebook Realtime Updates (" + str(page_id) + ") : " + str(result)
 
 
-def subscribe_fb_updates(page):
-    url = "%s/%s" % (page.page_id, "tabs")
+def subscribe_fb_updates(page_id, page_access_token):
+    url = "%s/%s" % (page_id, "tabs")
     data = {"app_id": FB_APP_ID}
-    return GraphAPI(page.page_access_token).request(url, post_args=data)
-
-
-def get_fb_page(user_id, page_id):
-    pages = FBUser.unserialize(FBUser.collection().find_one({"u_id": user_id})).pages
-    for page in pages:
-        fbPage = FBPage.unserialize(FBPage.collection().find_one({"page_access_token": page}))
-        if fbPage.page_id == page_id:
-            return fbPage
+    return GraphAPI(page_access_token).request(url, post_args=data)
 
 
 def get_fb_posts(page_id, access_token, limit=200, since=None):
@@ -127,68 +121,55 @@ def get_fb_posts(page_id, access_token, limit=200, since=None):
     return GraphAPI(access_token).request(url, args=data)
 
 
-def save_fb_posts(posts, page_id):
+def save_fb_post(post, page_id):
+    post_obj = FBPost()
+    post_obj.post_id = post["id"]
+    post_obj.page_id = page_id
+    post_obj.owner = post["from"]
+    post_obj.created_time = post["created_time"]
+    post_obj.updated_time = post["updated_time"]
+    comments_list = post.pop("comments", None)
+    post_obj.fields = post
+
     def save_obj(post):
-        comments = []
-        users = []
-        _fbUser_obj = _FBUser()
-        _fbUser_obj.id = post["from"]["id"]
-        _fbUser_obj.name = post["from"]["name"]
-        users.append(_fbUser_obj)
+        return FBPost.collection().save(post.serialize())
 
-        fbPost_obj = FBPost()
-        fbPost_obj.page_id = page_id
-        fbPost_obj.post_id = post["id"]
-        fbPost_obj.from_id = post["from"]["id"]
-        fbPost_obj.message = key_check(post, "message")
-        fbPost_obj.story = key_check(post, "story")
-        fbPost_obj.created_time = unix_time(post["created_time"])
-        fbPost_obj.updated_time = unix_time(post["updated_time"])
-        fbPost_obj.type = post["type"]
+    dupe_obj = FBPost.collection().find_one({"post_id": post["id"]})
 
-        if post["comments"]["count"] > 0:
-            for c in post["comments"]["data"]:
-                fbComment_obj = FBComment()
-                fbComment_obj.post_id = post["id"]
-                fbComment_obj.id = c["id"]
-                fbComment_obj.user = c["from"]["id"]
-                fbComment_obj.text = c["message"]
-                fbComment_obj.created_time = unix_time(c["created_time"])
-                comments.append(fbComment_obj)
+    if dupe_obj is None:
+        post_obj._id = save_obj(post_obj)
+    else:
+        FBPost.collection().update({"post_id": post["id"]}, post_obj.serialize())
+        post_obj = FBPost.unserialize(FBPost.collection().find_one({"post_id": post["id"]}))
 
-                fbCommentUser_obj = _FBUser()
-                fbCommentUser_obj.id = c["from"]["id"]
-                fbCommentUser_obj.name = c["from"]["name"]
-                # re-look logic for caching comment user's name into database
-                if any(u.id != fbCommentUser_obj.id for u in users):
-                    users.append(fbCommentUser_obj)
+    if comments_list["count"] > 0:
+        for comment in comments_list["data"]:
+            save_fb_post_comment(comment, post_obj.post_id)
 
-        return fbPost_obj, comments, users
+    return post_obj
 
-    posts_list, comments_list, users_list = [], [], []
-    for post in posts:
-        post_obj, comments_obj, users_obj = save_obj(post)
-        posts_list.append(post_obj)
-        comments_list.extend(comments_obj)
-        users_list.extend(users_obj)
 
-    for post in posts_list:
-        if FBPost.collection().find_one({"post_id": post.post_id}) is None:
-            FBPost.collection().insert(post.serialize())
+def save_fb_post_comment(comment, post_id):
+    comment_obj = FBComment()
+    comment_obj.post_id = post_id
+    comment_obj.comment_id = comment["id"]
+    comment_obj.owner = comment["from"]
+    comment_obj.message = comment["message"]
+    comment_obj.created_time = comment["created_time"]
+    comment_obj.fields = comment
 
-    for comment in comments_list:
-        if FBComment.collection().find_one({"id": comment.id}) is None:
-            FBComment.collection().insert(comment.serialize())
+    def save_obj(comment):
+        return FBComment.collection().save(comment.serialize())
 
-    for user in users_list:
-        if _FBUser.collection().find_one({"id": user.id}) is None:
-            _FBUser.collection().insert(user.serialize())
-        else:
-            # detected fb user has changed name, so update fb name in database
-            _user = _FBUser.unserialize(_FBUser.collection().find_one({"id": user.id}))
-            if user.id == _user.id and user.name != _user.name:
-                _FBUser.collection().update({"id": user.id}, {"$set": {"name": user.name}})
+    dupe_obj = FBComment.collection().find_one({"comment_id": comment["id"]})
 
+    if dupe_obj is None:
+        comment_obj._id = save_obj(comment_obj)
+    else:
+        FBComment.collection().update({"comment_id": comment["id"]}, comment_obj.serialize())
+        comment_obj = FBComment.unserialize(FBComment.collection().find_one({"comment_id": comment["id"]}))
+
+    return comment_obj
 
 
 def get_fb_events():
@@ -196,50 +177,37 @@ def get_fb_events():
 
 
 def page_realtime_update(entry):
+    print entry
     for e in entry:
         if FBPage.collection().find_one({"page_id": e["id"]}) is None:
             continue
         for change in e["changes"]:
             if change["field"] == "feed" and change["value"]["item"] == "comment" and change["value"]["verb"] == "add":
-                add_comment(change, e["id"])
+                comment_dict = get_comment_from_fb(change["value"]["comment_id"], e["id"])
+                post_id = "%s_%s" % (e["id"], change["value"]["parent_id"])
+                save_fb_post_comment(comment_dict, post_id)
+                update_post_time(post_id, comment_dict["created_time"])
+            elif change["field"] == "feed" and change["value"]["item"] == "post" and change["value"]["verb"] == "add":
+                post_dict = get_post_from_fb(change["value"]["post_id"], e["id"])
+                save_fb_post(post_dict, e["id"])
 
 
-def add_comment(change_obj, page_id):
-    value = change_obj["value"]
-
-    def save_obj(value_obj):
-        comment_obj = FBComment()
-        comment_obj.post_id = str(page_id) + "_" + str(value_obj["parent_id"])
-        comment_obj.id = str(page_id) + "_" + str(value_obj["comment_id"])
-        comment_obj.user = str(value_obj["sender_id"])
-        comment_obj.created_time = value_obj["created_time"]
-        comment_obj._id = FBComment.collection().insert(comment_obj.serialize())
-        return comment_obj
-
-    if FBComment.collection().find_one({"id": str(page_id) + "_" + str(value["comment_id"])}) is None:
-        comment = save_obj(value)
-    else:
-        comment = FBComment.unserialize(FBComment.collection().find_one({"id": str(page_id) + "_" + str(value["comment_id"])}))
-
-    # get updated comment info from facebook to update missing message and like_count
-    updated_comment = get_comment_from_fb(comment, page_id)
-    FBComment.collection().update({"id": comment.id}, {"$set": {"text": updated_comment["message"], "like_count": updated_comment["like_count"]}})
-
-    # check if comment user data exists in fb user cache
-    if _FBUser.collection().find_one({"id": updated_comment["from"]["id"]}) is None:
-        _FBUser.collection().insert({"id": updated_comment["from"]["id"], "name": updated_comment["from"]["name"]})
-    else:
-        _FBUser.collection().update({"id": updated_comment["from"]["id"]}, {"$set": {"name": updated_comment["from"]["name"]}})
-
-    # update timestamp for post
-    if comment is not None and updated_comment is not None:
-        FBPost.collection().update({"post_id": comment.post_id}, {"$set": {"updated_time": value["created_time"]}})
+def get_comment_from_fb(comment_id, page_id):
+    url = "%s_%s" % (page_id, comment_id)
+    return GraphAPI().request(url)
 
 
-def get_comment_from_fb(comment_obj, page_id):
-    url = "%s" % (comment_obj.id)
-    page = FBPage.unserialize(FBPage.collection().find_one({"page_id": page_id}))
-    return GraphAPI(page.page_access_token).request(url)
+def get_post_from_fb(post_id, page_id):
+    url = "%s_%s" % (page_id, post_id)
+    access_token = (BrandMapping.unserialize(BrandMapping.collection().find_one({"facebook.id": page_id}))).facebook["access_token"]
+    print access_token
+    return GraphAPI(access_token).request(url)
+
+
+def update_post_time(post_id, updated_time):
+    print "post_id: " + str(post_id)
+    print "updated_time: " + str(updated_time)
+    FBPost.collection().update({"post_id": post_id}, {"$set": {"updated_time": updated_time}})
 
 
 def put_fb_post(page, message, attachment={}, is_published=True):
