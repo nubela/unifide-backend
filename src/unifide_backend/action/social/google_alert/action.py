@@ -11,7 +11,6 @@ def get_keywords():
     """
     Gets all registered keywords
     """
-    gam = _gam()
     alerts = generator_to_list(_gam().alerts)
     return [x.query for x in alerts]
 
