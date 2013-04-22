@@ -2,12 +2,29 @@ from datetime import datetime
 from time import mktime
 import feedparser
 import galerts
-from unifide_backend.action.social.google_alert.model import Keyword, Mention
+from unifide_backend.action.social.brand_mention.model import Keyword, Mention
 from unifide_backend.action.util import readable, generator_to_list
 from unifide_backend.local_config import GOOGLE_USERNAME, GOOGLE_PASSWD_ENCODED
 
 
-def get_keywords():
+def del_keyword(keyword_str, async=False):
+    kw_obj = get_keyword_from_str(keyword_str)
+    if kw_obj is None: return
+
+    #delete off db
+    Keyword.collection().remove({"_id": kw_obj.obj_id()})
+
+    #dleete off google alert account
+    alert_obj = _get_alert_from_keyword(keyword_str)
+    _gam().delete(alert_obj)
+
+
+def get_keyword_from_str(kw):
+    dic = Keyword.collection().find_one({"keyword": kw})
+    return Keyword.unserialize(dic) if dic is not None else None
+
+
+def get_str_keywords():
     """
     Gets all registered keywords
     """

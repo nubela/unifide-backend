@@ -6,35 +6,35 @@ BASE_MENU = [
              "name": "OVERVIEW",
              "sub-menu":
                   [
-                      {"name": "VIEW ALL", "link": "/", "order": "0"},
+                      {"name": "View All", "link": "/", "order": "0"},
                       {"name": "divider", "link": "", "order": "1"},
-                      {"name": "FACEBOOK", "link": "/facebook", "order": "2"},
-                      {"name": "TWITTER", "link": "/twitter", "order": "3"},
-                      {"name": "FOURSQUARE", "link": "/foursquare", "order": "4"},
-                      {"name": "BRAND MENTION", "link": "/brand-mention", "order": "5"},
+                      {"name": "Facebook", "link": "/facebook", "order": "2"},
+                      {"name": "Twitter", "link": "/twitter", "order": "3"},
+                      {"name": "Foursquare", "link": "/foursquare", "order": "4"},
+                      {"name": "Brand Mention", "link": "/brand-mention", "order": "5"},
                       {"name": "divider", "link": "", "order": "6"},
-                      {"name": "WEB", "link": "/web-platform", "order": "7"},
+                      {"name": "Web", "link": "/web-platform", "order": "7"},
                       {"name": "iOS", "link": "/ios-platform", "order": "8"},
-                      {"name": "ANDROID", "link": "/android-platform", "order": "9"}
+                      {"name": "Android", "link": "/android-platform", "order": "9"}
                    ]},
             {"order": 1,
              "name": "CAMPAIGN",
              "sub-menu":
                   [
-                      {"name": "NEW PROMO CAMPAIGN", "link": "/campaign/new/promo", "order": "0"},
-                      {"name": "NEW EVENT CAMPAIGN", "link": "/campaign/new/event", "order": "1"},
+                      {"name": "New Promotion", "link": "/campaign/new/promo", "order": "0"},
+                      {"name": "New Event", "link": "/campaign/new/event", "order": "1"},
                       {"name": "divider", "link": "", "order": "2"},
-                      {"name": "MANAGE CAMPAIGNS", "link": "/campaign", "order": "3"}
+                      {"name": "Manage", "link": "/campaign", "order": "3"}
                   ]},
             {"order": 2,
              "name": "MODULES",
              "sub-menu":
                   [
-                      {"name": "BUSINESS INFORMATION", "link": "/business-info", "order": "0"},
-                      {"name": "BLOG", "link": "/blog", "order": "1"},
-                      {"name": "RESERVATIONS", "link": "/reservation", "order": "2"},
+                      {"name": "Business Info", "link": "/business-info", "order": "0"},
+                      {"name": "Blog", "link": "/blog", "order": "1"},
+                      {"name": "Reservations", "link": "/reservation", "order": "2"},
                       {"name": "divider", "link": "", "order": "3"},
-                      {"name": "ITEMS", "link": "/items", "order": "4"}
+                      {"name": "Items", "link": "/items", "order": "4"}
                   ]}
             ]
 
