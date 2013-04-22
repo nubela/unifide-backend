@@ -16,13 +16,14 @@ INSTALLED_PACKAGES = [
 ]
 
 #mongodb
-MONGO_URI = 'mongodb://localhost/unifide'
+MONGO_URI = 'mongodb://kianwei:thisisnotsecureatall@localhost/unifide-backend'
+#MONGO_URI = 'mongodb://localhost/unifide'
 LOG_FILE = os.path.join(cwd, "log.txt")
 MONGO_HOST = "localhost"
 MONGO_PORT = 27017
-MONGO_DB = "unifide"
-if MOCK_MODE:
-    MONGO_DB = "mock"
+MONGO_DB = "unifide-backend"
+#if MOCK_MODE:
+#    MONGO_DB = "mock"
 
 #mock stuff
 MOCK_DATE_RANGE_DAYS = 100
