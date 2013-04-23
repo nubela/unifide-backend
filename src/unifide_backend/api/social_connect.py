@@ -183,14 +183,16 @@ def auth_twitter():
     """
     (GET: social_connect/twitter/auth)
     """
+    from unifide_backend.action.social.twitter.action import save_tw_user_oauth
 
     verb = "get"
     noun = "social_connect/twitter/auth"
 
-    #auth check
-    #to-do
+    #req_vars
+    user_id = request.args.get("user_id")
+    brand_name = request.args.get("brand_name")
 
-    auth = tweepy.OAuthHandler(TW_CONSUMER_KEY, TW_CONSUMER_SECRET, TW_REDIRECT_URI)
+    auth = tweepy.OAuthHandler(TW_CONSUMER_KEY, TW_CONSUMER_SECRET, TW_REDIRECT_URI + brand_name + "/")
 
     try:
         redirect_url = auth.get_authorization_url()
@@ -199,31 +201,33 @@ def auth_twitter():
         return jsonify({"status": "error",
                         "error": "Failed to get request token."})
 
+    save_tw_user_oauth(user_id, brand_name, auth.request_token.key, auth.request_token.secret)
+
     return jsonify({"status": "ok",
-                    "auth_url": redirect_url,
-                    "request_token": {"oauth_token": auth.request_token.key,
-                                      "oauth_token_secret": auth.request_token.secret}})
+                    "auth_url": redirect_url})
 
 
 def connect_twitter():
     """
     (PUT: social_connect/twitter)
     """
-    from unifide_backend.action.social.twitter.action import save_tw_user
+    from unifide_backend.action.social.twitter.action import get_tw_user_oauth, save_tw_user
 
     verb = "put"
     noun = "social_connect/twitter"
 
-    #auth check
-    #to-do
-
+    #req_vars
     user_id = request.form.get("user_id")
+    brand_name = request.form.get("brand_name")
     verifier = request.form.get("oauth_verifier")
-    token = request.form.get("oauth_token")
-    token_secret = request.form.get("oauth_token_secret")
 
     auth = tweepy.OAuthHandler(TW_CONSUMER_KEY, TW_CONSUMER_SECRET)
-    auth.set_request_token(token, token_secret)
+    tw_user_oauth = get_tw_user_oauth(user_id, brand_name)
+    if tw_user_oauth is None:
+        return jsonify({"status": "error",
+                        "error": "Failed to get user oauth key and secret"})
+
+    auth.set_request_token(tw_user_oauth.oauth_key, tw_user_oauth.oauth_secret)
 
     try:
         auth.get_access_token(verifier)
@@ -232,10 +236,24 @@ def connect_twitter():
         return jsonify({"status": "error",
                         "error": "Failed to get access token"})
 
-    tw_user = save_tw_user(user_id, auth.access_token.key, auth.access_token.secret)
+    tw_user = save_tw_user(user_id, brand_name, auth.access_token.key, auth.access_token.secret)
     if tw_user is None:
         return jsonify({"status": "error",
                         "error": "Failed to save twitter user"})
+
+    return jsonify({"status": "ok"})
+
+
+def del_twitter_user():
+    """
+    (DELETE: social_connect/twitter/user
+    """
+    from unifide_backend.action.social.twitter.action import del_twitter_user
+
+    user_id = request.args.get("user_id")
+    brand_name = request.args.get("brand_name")
+
+    del_twitter_user(user_id, brand_name)
 
     return jsonify({"status": "ok"})
 
@@ -355,6 +373,9 @@ def _register_api(app):
 
     app.add_url_rule('/social_connect/twitter/',
         "connect_twitter", connect_twitter, methods=['PUT'])
+
+    app.add_url_rule('/social_connect/twitter/user/',
+        "del_twitter_user", del_twitter_user, methods=['DELETE'])
 
     app.add_url_rule('/social_connect/foursquare/',
         "auth_foursquare", auth_foursquare, methods=['GET'])

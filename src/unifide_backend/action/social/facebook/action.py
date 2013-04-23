@@ -207,6 +207,11 @@ def update_post_time(post_id, updated_time):
     FBPost.collection().update({"post_id": post_id}, {"$set": {"updated_time": updated_time}})
 
 
+#
+#code below is deprecated or not tested with new implementation
+#
+
+
 def put_fb_post(page, message, attachment={}, is_published=True):
     p = FBPost()
     p.message = message
