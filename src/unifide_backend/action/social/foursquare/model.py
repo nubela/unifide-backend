@@ -5,9 +5,10 @@ class FSQUser(Base):
     def __init__(self, **kwargs):
         self.fsq_id = None
         self.u_id = None
+        self.brand_name = None
         self.first_name = None
         self.last_name = None
-        self.access_token = None
+        self.fields = None
 
         for k, v in kwargs.iteritems():
             setattr(self, k, v)
@@ -25,6 +26,11 @@ class FSQUser(Base):
 
 
 class FSQVenue(Base):
+    def __init__(self, **kwargs):
+        self.venue_id = None
+        self.name = None
+        self.fields = None
+
     def get_id(self):
         return self.id()
 
@@ -51,6 +57,13 @@ class FSQCheckin(Base):
 
 
 class FSQTip(Base):
+    def __init__(self, **kwargs):
+        self.venue_id = None
+        self.tip_id = None
+        self.text = None
+        self.fields = None
+        self.createdAt = None
+
     def get_id(self):
         return self.id()
 

@@ -35,11 +35,11 @@ def get_mapping(mapping_obj_id):
     return Mapping.unserialize(dic) if dic is not None else None
 
 
-def get_brand_mapping(user_id, brand_id):
+def get_brand_mapping(user_id, brand_name):
     collection = BrandMapping.collection()
-    if user_id is None or brand_id is None:
+    if user_id is None or brand_name is None:
         return None
-    dic = collection.find_one({"uid": user_id, "_id": coerce_bson_id(brand_id)})
+    dic = collection.find_one({"uid": user_id, "brand_name": brand_name})
     return BrandMapping.unserialize(dic) if dic is not None else None
 
 

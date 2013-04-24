@@ -260,15 +260,15 @@ def del_twitter_user():
 
 def auth_foursquare():
     """
-    (GET: social_connect/foursquare)
+    (GET: social_connect/foursquare/auth)
     """
     from unifide_backend.action.social.foursquare.action import get_auth_url
 
     verb = "get"
-    noun = "social_connect/foursquare"
+    noun = "social_connect/foursquare/auth"
 
-    #auth check
-    #to-do
+    user_id = request.args.get("user_id")
+    brand_name = request.args.get("brand_name")
 
     return jsonify({"status": "ok",
                     "auth_url": get_auth_url()})
@@ -285,13 +285,14 @@ def connect_foursquare():
 
     #req_vars
     user_id = request.form.get("user_id")
+    brand_name = request.form.get("brand_name")
     code = request.form.get("code")
 
     #auth check
     #to-do
 
     try:
-        fsq_user_obj = save_fsq_user(user_id, get_access_token_from_fsq(code))
+        fsq_user_obj = save_fsq_user(user_id, brand_name, get_access_token_from_fsq(code))
     except:
         return jsonify({"status": "error",
                         "error": "Failed to save foursquare user."})
@@ -299,44 +300,75 @@ def connect_foursquare():
     return jsonify({"status": "ok"})
 
 
-def get_foursquare_venue():
+def get_foursquare_venues_managed():
     """
     (GET: social_connect/foursquare/venue)
     """
+    from unifide_backend.action.social.foursquare.action import get_fsq_venues_managed
 
     verb = "get"
-    noun = "social_connect/foursquare/venue"
+    noun = "social_connect/foursquare/venue/managed"
 
     #req_vars
-    user_id = request.form.get("user_id")
+    user_id = request.args.get("user_id")
+    brand_name = request.args.get("brand_name")
 
+    print user_id, brand_name
+    venue_list = get_fsq_venues_managed(user_id, brand_name)
 
-
-    return json({"status": "ok",
-                 "venues": ""})
+    return jsonify({"status": "ok",
+                    "venues": venue_list})
 
 
 def put_foursquare_venue():
     """
     (PUT: social_connect/foursquare/venue)
     """
+    from unifide_backend.action.social.foursquare.action import put_fsq_venue
 
     verb = "put"
     noun = "social_connect/foursquare/venue"
 
     #req_vars
     user_id = request.form.get("user_id")
+    brand_name = request.form.get("brand_name")
     venue_id = request.form.get("venue_id")
+
+    put_fsq_venue(user_id, brand_name, venue_id)
+    print "done"
 
     return jsonify({"status": "ok"})
 
 
-def google_alerts():
+def del_foursquare_venue():
     """
-    (PUT: social_connect/google_alerts)
+    (DELETE: social_connect/foursquare/venue)
     """
+    from unifide_backend.action.social.foursquare.action import del_fsq_venue
 
-    return "brand_mention alerts"
+    #req_vars
+    user_id = request.args.get("user_id")
+    brand_name = request.args.get("brand_name")
+    venue_id = request.args.get("venue_id")
+
+    del_fsq_venue(user_id, brand_name, venue_id)
+
+    return jsonify({"status": "ok"})
+
+
+def del_foursquare_user():
+    """
+    (DELETE: social_connect/foursquare/user)
+    """
+    from unifide_backend.action.social.foursquare.action import del_fsq_user
+
+    #req_vars
+    user_id = request.args.get("user_id")
+    brand_name = request.args.get("brand_name")
+
+    del_fsq_user(user_id, brand_name)
+
+    return jsonify({"status": "ok"})
 
 
 def _register_api(app):
@@ -377,14 +409,20 @@ def _register_api(app):
     app.add_url_rule('/social_connect/twitter/user/',
         "del_twitter_user", del_twitter_user, methods=['DELETE'])
 
-    app.add_url_rule('/social_connect/foursquare/',
+    app.add_url_rule('/social_connect/foursquare/auth/',
         "auth_foursquare", auth_foursquare, methods=['GET'])
 
     app.add_url_rule('/social_connect/foursquare/',
         "connect_foursquare", connect_foursquare, methods=['PUT'])
 
+    app.add_url_rule('/social_connect/foursquare/venue/managed/',
+        "get_foursquare_venues_managed", get_foursquare_venues_managed, methods=['GET'])
+
     app.add_url_rule('/social_connect/foursquare/venue/',
         "put_foursquare_venue", put_foursquare_venue, methods=['PUT'])
 
-    app.add_url_rule('/social_connect/google_alerts/',
-        "google_alerts", google_alerts, methods=['PUT'])
+    app.add_url_rule('/social_connect/foursquare/venue/',
+        "del_foursquare_venue", del_foursquare_venue, methods=['DELETE'])
+
+    app.add_url_rule('/social_connect/foursquare/user/',
+        "del_foursquare_user", del_foursquare_user, methods=['DELETE'])
