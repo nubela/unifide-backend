@@ -8,9 +8,9 @@ BASE_MENU = [
                   [
                       {"name": "View All", "link": "/", "order": "0"},
                       {"name": "divider", "link": "", "order": "1"},
-                      {"name": "Facebook", "link": "/facebook", "order": "2"},
-                      {"name": "Twitter", "link": "/twitter", "order": "3"},
-                      {"name": "Foursquare", "link": "/foursquare", "order": "4"},
+                      {"name": "Facebook", "link": "/facebook/page/activity", "order": "2"},
+                      {"name": "Twitter", "link": "/twitter/activity", "order": "3"},
+                      {"name": "Foursquare", "link": "/foursquare/venue/activity", "order": "4"},
                       {"name": "Brand Mention", "link": "/brand-mention", "order": "5"},
                       {"name": "divider", "link": "", "order": "6"},
                       {"name": "Web", "link": "/web-platform", "order": "7"},
