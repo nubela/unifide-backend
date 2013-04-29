@@ -1,11 +1,12 @@
 #general
 import os
+from base import S3
 
 cwd = os.path.dirname(os.path.realpath(__file__))
 DEBUG = True
 ASSETS_FOLDER = "/Users/nubela/Workspace/unifide-plop/base/assets"
 SECRET_KEY = "b4ef3a73-5d52-11e2-9b58-14109feb3038"
-DOMAIN = "http://localhost:5001"
+DOMAIN = "http://localhost:5000"
 MOCK_MODE = False
 INSTALLED_PACKAGES = [
     "articles",
@@ -49,7 +50,8 @@ API_TO_REGISTER = (
     "social_connect",
     "account",
     "campaign",
-    "brand_mention"
+    "brand_mention",
+    "items"
 )
 
 #facebook test user
