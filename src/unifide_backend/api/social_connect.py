@@ -112,9 +112,11 @@ def get_facebook_pages():
     #to-do
 
     fbUser = get_fb_user(user_id, brand_name)
+    data = get_fb_page_list(fbUser.fb_id, fbUser.access_token)
+    print data
 
     return jsonify({"status": "ok",
-                    "page_list": get_fb_page_list(fbUser.fb_id, fbUser.access_token)})
+                    "page_list": data})
 
 
 def put_facebook_page():

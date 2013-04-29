@@ -8,7 +8,7 @@ from unifide_backend.local_config import FB_APP_ID
 from unifide_backend.action.social.facebook.sdk import GraphAPI
 from unifide_backend.action.social.facebook.model import FBUser, FBPage, FBPost, FBComment
 from unifide_backend.action.mapping.action import update_brand_mapping
-from unifide_backend.action.mapping.model import BrandMapping
+from unifide_backend.action.mapping.model import BrandMapping, CampaignState
 
 
 def save_fb_user(user_id, brand_name, fb_id, access_token, token_expiry):
@@ -130,7 +130,7 @@ def save_fb_post(post, page_id):
     def save_obj(post):
         return FBPost.collection().save(post.serialize())
 
-    dupe_obj = FBPost.collection().find_one({"post_id": post["id"]})
+    dupe_obj = FBPost.collection().find_one({"post_id": str(post["id"])})
 
     if dupe_obj is None:
         post_obj._id = save_obj(post_obj)
@@ -197,7 +197,6 @@ def get_post_from_fb(post_id, page_id):
     url = "%s_%s" % (page_id, post_id)
     access_token = (BrandMapping.unserialize(BrandMapping.collection().find_one({"facebook.id": page_id}))).facebook[
         "access_token"]
-    print access_token
     return GraphAPI(access_token).request(url)
 
 
@@ -207,30 +206,19 @@ def update_post_time(post_id, updated_time):
     FBPost.collection().update({"post_id": post_id}, {"$set": {"updated_time": updated_time}})
 
 
-#
-#code below is deprecated or not tested with new implementation
-#
+def put_fb_post(page, fb_id, state, message, attachment={}):
+    post = FBPost()
+    post.page_id = page["id"]
+    post.owner = {"id": fb_id}
+    post.fields = {"message": message}
 
-
-def put_fb_post(page, message, attachment={}, is_published=True):
-    p = FBPost()
-    p.message = message
-    print page
-
-    def publish():
+    if state == CampaignState.PUBLISHED:
         api = GraphAPI(page["access_token"])
-        return api.put_wall_post(message, profile_id=page["page_id"])["id"]
-
-    def save(post):
-        return FBPost.collection().insert(post.serialize())
-
-    if is_published:
-        p.post_id = publish()
-        if p.post_id is not None:
-            p._id = save(p)
-        else:
-            return None
+        post.post_id = api.put_wall_post(message, profile_id=page["id"])["id"]
+        url = "%s" % post.post_id
+        post_data = api.request(url)
+        post = save_fb_post(post_data, page["id"])
     else:
-        p._id = save(p)
+        post._id = FBPost.collection().insert(post.serialize())
 
-    return p
+    return post

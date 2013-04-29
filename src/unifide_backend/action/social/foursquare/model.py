@@ -74,3 +74,23 @@ class FSQTip(Base):
     @staticmethod
     def coll_name():
         return "fsq_tip"
+
+
+class FSQPageUpdate(Base):
+    def __init__(self, **kwargs):
+        self.venue_id = None
+        self.update_id = None
+        self.shout = None
+        self.fields = None
+        self.createdAt = None
+
+    def get_id(self):
+        return self.id()
+
+    @staticmethod
+    def unserialize(dic):
+        return FSQPageUpdate(**dic)
+
+    @staticmethod
+    def coll_name():
+        return "fsq_pageupdate"

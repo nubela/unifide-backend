@@ -2,10 +2,10 @@ from threading import Thread
 
 import foursquare
 from unifide_backend.local_config import FSQ_CLIENT_ID, FSQ_CLIENT_SECRET, FSQ_REDIRECT_URI
-from unifide_backend.action.social.foursquare.model import FSQUser, FSQVenue, FSQTip, FSQCheckin
+from unifide_backend.action.social.foursquare.model import FSQUser, FSQVenue, FSQTip, FSQCheckin, FSQPageUpdate
 from unifide_backend.action.util import key_check
 from unifide_backend.action.mapping.action import update_brand_mapping, get_brand_mapping
-from unifide_backend.action.mapping.model import BrandMapping
+from unifide_backend.action.mapping.model import BrandMapping, CampaignState
 from unifide_backend.action.social.foursquare.sdk import FoursquareAPI
 
 
@@ -122,3 +122,21 @@ def del_fsq_venue(user_id, brand_name, venue_id):
 def del_fsq_user(user_id, brand_name):
     update_brand_mapping(user_id, brand_name, "foursquare")
     FSQUser.collection().remove({"u_id": user_id, "brand_name": brand_name})
+
+
+def put_fsq_update(shout, venue_id, access_token, state):
+    page_update = FSQPageUpdate()
+    page_update.venue_id = venue_id
+    page_update.shout = shout
+    print shout, venue_id, access_token
+
+    if state == CampaignState.PUBLISHED:
+        url = "%s/%s" % ("pageupdates", "add")
+        api = FoursquareAPI(access_token)
+        dict = {"pageId": venue_id,
+                "venueId": venue_id,
+                "shout": shout}
+        data = api.request(url, post_args=dict)
+        print data
+
+    pass

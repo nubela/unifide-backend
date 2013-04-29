@@ -11,17 +11,15 @@ def save(mapping_obj):
     return id
 
 
-def put_mapping(uid, kvp, publish_datetime, is_published=True, is_draft=False):
+def put_mapping(uid, brand_name, kvp, publish_datetime, state):
     mapping_obj = Mapping()
     mapping_obj.uid = uid
+    mapping_obj.brand_name = brand_name
+    mapping_obj.state = state
     mapping_obj.publish_datetime = publish_datetime
-    mapping_obj.is_published = is_published
-    mapping_obj.is_draft = is_draft
 
     for k,v in kvp.iteritems():
-        old_val = getattr(mapping_obj, k) if getattr(mapping_obj, k) is not None else []
-        old_val.append(v)
-        setattr(mapping_obj, k, old_val)
+        setattr(mapping_obj, k, v)
 
     mapping_obj._id = save(mapping_obj)
     return mapping_obj

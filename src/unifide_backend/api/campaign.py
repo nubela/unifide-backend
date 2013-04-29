@@ -1,33 +1,50 @@
 from flask.globals import request
 from flask.helpers import json, jsonify
+import datetime
 
-PLATFORM_CAMPAIGN = "campaign"
+PLATFORM_CAMPAIGN = "web"
 PLATFORM_FACEBOOK = "facebook"
 PLATFORM_TWITTER = "twitter"
 PLATFORM_FOURSQUARE = "foursquare"
 PLATFORM_PUSH = "push"
+PLATFORM_BLOG = "blog"
 
 def put_campaign_media():
-    pass
+
+    #req_vars
+    user_id = request.form.get("user_id")
+    brand_name = request.form.get("brand_name")
+    print user_id
+
+    return jsonify({"status": "ok"})
 
 
 def put_campaign_data():
+    """
+    (PUT: campaign/data)
+    """
     from campaigns.campaign.model import Campaign
     from campaigns.campaign.action import save
+    from unifide_backend.action.mapping.model import CampaignState
     from unifide_backend.action.mapping.action import put_mapping, get_brand_mapping
-    from unifide_backend.action.social.facebook.action import put_fb_post
+    from unifide_backend.action.social.facebook.action import put_fb_post, get_fb_user
+    from unifide_backend.action.social.twitter.action import put_tweet, get_tw_user
+    from unifide_backend.action.social.foursquare.action import put_fsq_update
 
     user_id = request.form.get("user_id")
-    brand_id = request.form.get("brand_id")
-    platforms = request.form.get("platforms")
+    brand_name = request.form.get("brand_name")
+    platforms = request.form.get("platform")
+    type = request.form.get("type")
     title = request.form.get("title")
     description = request.form.get("description")
-    type = request.form.get("type")
-    datetime = request.form.get("datetime")
+    event_datetime_start = request.form.get("datetime_start")
+    event_datetime_end = request.form.get("datetime_end")
     place = request.form.get("place")
-    is_published = request.form.get("is_published")
-    is_draft = request.form.get("is_draft")
     item_list = request.form.get("item_list")
+    state = request.form.get("state")
+
+    brand_obj = get_brand_mapping(user_id, brand_name)
+    platforms = platforms.split(",")
 
     kvp = {}
     if PLATFORM_CAMPAIGN in platforms:
@@ -38,27 +55,39 @@ def put_campaign_data():
         c.type = type
         c._id = save(c)
         c.item_id_lis = item_list
-
-        kvp["campaign_list"] = c._id
+        kvp["campaign"] = c._id
+        print "done campaign"
 
     if PLATFORM_FACEBOOK in platforms:
-        fb_post = put_fb_post(get_brand_mapping(user_id, brand_id).facebook, title)
-        kvp["facebook_list"] = fb_post._id
+        fb_user = get_fb_user(user_id, brand_name)
+        try:
+            p = put_fb_post(brand_obj.facebook, fb_user.fb_id, state, title)
+            kvp[PLATFORM_FACEBOOK] = p._id
+        except Exception, e:
+            print e
+        print "done facebook"
 
     if PLATFORM_TWITTER in platforms:
-        tw_tweet = ""
-        kvp["twitter_list"] = tw_tweet._id
+        tw_user = get_tw_user(user_id, brand_name)[0]
+        tweet = put_tweet(title, tw_user.tw_id, brand_obj.twitter["access_token"]["key"], brand_obj.twitter["access_token"]["secret"], state)
+        kvp[PLATFORM_TWITTER] = tweet._id
+        print "done twitter"
 
     if PLATFORM_FOURSQUARE in platforms:
-        fsq_tip = ""
-        kvp["foursquare_list"] = fsq_tip._id
+        #todo : error accessing API endpoint for page updates
+        page_update = put_fsq_update(title, brand_obj.foursquare["venues"][0], brand_obj.foursquare["access_token"], state)
+        print "done foursquare"
 
-    if PLATFORM_PUSH in platforms:
-        # todo: push notification
+    if PLATFORM_BLOG in platforms:
+        #todo : waiting for articles implementation
         pass
 
-    publish_datetime = datetime.datetime.now() if is_published is True else None
-    put_mapping(user_id, kvp, publish_datetime, is_published, is_draft)
+    if PLATFORM_PUSH in platforms:
+        #todo : waiting for push implementation
+        pass
+
+    publish_datetime = datetime.datetime.now() if state == CampaignState.PUBLISHED else None
+    put_mapping(user_id, brand_name, kvp, publish_datetime, state)
 
     return jsonify({"status": "ok"})
 

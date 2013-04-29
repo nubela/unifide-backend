@@ -1,7 +1,7 @@
 from unifide_backend.local_config import TW_CONSUMER_KEY, TW_CONSUMER_SECRET, ADD_USER_MAX_TWEET, TW_INDIVIDUAL_STREAM
 from unifide_backend.action.social.twitter.model import TWUser, TWTweet
 from unifide_backend.action.mapping.action import update_brand_mapping
-from unifide_backend.action.mapping.model import BrandMapping
+from unifide_backend.action.mapping.model import BrandMapping, CampaignState
 from threading import Thread
 import tweepy
 from tweepy.cursor import Cursor
@@ -103,6 +103,21 @@ def save_tweet(status, tw_id):
         tweet_obj = TWTweet.unserialize(TWTweet.collection().find_one({"tweet_id": tweet_obj.tweet_id, "tw_id": tweet_obj.tw_id}))
 
     return tweet_obj
+
+
+def put_tweet(text, tw_id, key, secret, state):
+    tw = TWTweet()
+    tw.tw_id = tw_id
+    tw.text = text
+
+    if state == CampaignState.PUBLISHED:
+        api = get_api(key, secret)[0]
+        data = api.update_status(text)
+        tw = save_tweet(data, tw_id)
+    else:
+        tw._id = TWTweet.collection().insert(tw.serialize())
+
+    return tw
 
 
 def activate_stream(user_id, brand_name):
