@@ -2,6 +2,7 @@
 # backend for unifide
 #===============================================================================
 from flask import Flask
+from cfg import UPLOAD_FOLDER
 from local_config import API_TO_REGISTER, LOG_FILE, DEBUG
 from unifide_backend.action.cp.action import init_cp_menu
 import api
@@ -36,10 +37,10 @@ def _app_init(app):
         from werkzeug.wsgi import SharedDataMiddleware
         import os
 
-
         app.wsgi_app = SharedDataMiddleware(app.wsgi_app, {
-            '/': os.path.join(os.path.dirname(__file__), 'static')
+            '/resources': UPLOAD_FOLDER
         })
+
 
 
 def init_app(app):
