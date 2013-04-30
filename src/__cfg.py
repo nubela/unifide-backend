@@ -13,6 +13,7 @@ INSTALLED_PACKAGES = [
     "campaigns",
     "ecommerce",
     "orders",
+    "items",
 ]
 
 #mongodb
