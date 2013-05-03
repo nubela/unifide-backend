@@ -19,6 +19,7 @@ def get_containers_and_items():
     all_child_containers = items.child_containers(container_obj)
     return jsonify({
         "status": "ok",
+        "description": container_obj.description if container_obj is not None else None,
         "items": [x.serialize(json_friendly=True) for x in all_items],
         "child_containers": [x.serialize(json_friendly=True) for x in all_child_containers]
     })
@@ -29,8 +30,11 @@ def put_container():
     (PUT: container)
     """
     path_lis_json = request.form.get("path_lis")
+    description = request.form.get("description", None)
     path_lis = json.loads(path_lis_json)
-    items.save_container_path(path_lis)
+    container_obj = items.save_container_path(path_lis)
+    container_obj.description = description
+    items.save_container(container_obj)
     return jsonify({
         "status": "ok",
     })
@@ -59,10 +63,12 @@ def put_item():
     redirect_url = request.form.get("redirect_to", None)
 
     #save media
-    if request.files.get("media_file").mimetype in ["image/png", "image/gif", "image/jpeg", "image/jpg"]:
-        media_obj = save_image(media_file, UPLOAD_METHOD)
-    else:
-        media_obj = save_media(media_file, UPLOAD_METHOD)
+    if media_file.filename != "":
+        print "got it"
+        if request.files.get("media_file").mimetype in ["image/png", "image/gif", "image/jpeg", "image/jpg"]:
+            media_obj = save_image(media_file, UPLOAD_METHOD)
+        else:
+            media_obj = save_media(media_file, UPLOAD_METHOD)
 
     #create item obj
     item_obj = Item()
@@ -72,7 +78,7 @@ def put_item():
     item_obj.price = price
     item_obj.container_id = container_obj.obj_id()
     item_obj.status = status
-    item_obj.media_id = media_obj.obj_id()
+    item_obj.media_id = media_obj.obj_id() if media_file.filename != "" else None
     if extra_attr is not None:
         for k, v in extra_attr.items():
             setattr(item_obj, k, v)
