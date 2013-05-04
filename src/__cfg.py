@@ -14,6 +14,7 @@ INSTALLED_PACKAGES = [
     "ecommerce",
     "orders",
     "items",
+    "business",
 ]
 
 #mongodb

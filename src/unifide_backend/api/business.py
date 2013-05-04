@@ -1,13 +1,39 @@
-from flask.globals import request
-from flask.helpers import json, jsonify
+from flask import jsonify, request
+from base import org
 
 
 def put_business_info():
-    pass
+    """
+    (PUT: business/info)
+    """
+    desc = request.form.get("description")
+    name = request.form.get("name")
+    email = request.form.get("email")
+    address = request.form.get("address")
+
+    #update it
+    org_info_obj = org.get()
+    if name is not None:
+        org_info_obj.name = name
+    if desc is not None:
+        org_info_obj.description = desc
+    if email is not None:
+        org_info_obj.email = email
+    if address is not None:
+        org_info_obj.address = address
+    org.save(org_info_obj)
+
+    return jsonify({
+        "status": "ok"
+    })
 
 
 def get_business_info():
-    pass
+    """
+    (GET: business/info)
+    """
+    org_info_obj = org.get()
+    return jsonify(org_info_obj.serialize())
 
 
 def put_business_reservation():
