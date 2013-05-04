@@ -21,8 +21,8 @@ BASE_MENU = [
              "name": "CAMPAIGN",
              "sub-menu":
                   [
-                      {"name": "New Promotion", "link": "/campaign/new/promo", "order": "0"},
-                      {"name": "New Event", "link": "/campaign/new/event", "order": "1"},
+                      {"name": "New Promotion", "link": "/campaign/promo/new", "order": "0"},
+                      {"name": "New Event", "link": "/campaign/event/new", "order": "1"},
                       {"name": "divider", "link": "", "order": "2"},
                       {"name": "Manage", "link": "/campaign", "order": "3"}
                   ]},
@@ -30,7 +30,7 @@ BASE_MENU = [
              "name": "MODULES",
              "sub-menu":
                   [
-                      {"name": "Business Info", "link": "/business-info", "order": "0"},
+                      {"name": "Business Info", "link": "/bizinfo", "order": "0"},
                       {"name": "Blog", "link": "/blog", "order": "1"},
                       {"name": "Reservations", "link": "/reservation", "order": "2"},
                       {"name": "divider", "link": "", "order": "3"},
