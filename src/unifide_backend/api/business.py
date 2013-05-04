@@ -1,4 +1,4 @@
-from flask import jsonify, request
+from flask import jsonify, request, redirect
 from base import org
 
 
@@ -10,6 +10,7 @@ def put_business_info():
     name = request.form.get("name")
     email = request.form.get("email")
     address = request.form.get("address")
+    redirect_url = request.form.get("redirect_to")
 
     #update it
     org_info_obj = org.get()
@@ -22,6 +23,9 @@ def put_business_info():
     if address is not None:
         org_info_obj.address = address
     org.save(org_info_obj)
+
+    if redirect_url is not None:
+        return redirect(redirect_url)
 
     return jsonify({
         "status": "ok"
@@ -78,7 +82,7 @@ def _register_api(app):
     """
 
     app.add_url_rule('/business/info/',
-                     "put_business_info", put_business_info, methods=['PUT'])
+                     "put_business_info", put_business_info, methods=['PUT', 'POST'])
 
     app.add_url_rule('/business/info/',
                      "get_business_info", get_business_info, methods=['GET'])
