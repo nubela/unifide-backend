@@ -56,7 +56,9 @@ API_TO_REGISTER = (
     "account",
     "campaign",
     "brand_mention",
-    "items"
+    "items",
+    "business",
+    "order",
 )
 
 #facebook test user
