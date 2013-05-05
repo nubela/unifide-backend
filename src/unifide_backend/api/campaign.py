@@ -53,7 +53,7 @@ def put_campaign_data():
     platforms = platforms.split(",")
 
     kvp = {}
-    if PLATFORM_CAMPAIGN in platforms:
+    if PLATFORM_CAMPAIGN in platforms or PLATFORM_BLOG in platforms:
         c = Campaign()
         c.uid = user_id
         c.title = title
@@ -64,8 +64,14 @@ def put_campaign_data():
         c.happening_datetime_start = event_datetime_start if event_datetime_start is not None else None
         c.happening_datetime_end = event_datetime_end if event_datetime_end is not None else None
         c._id = save(c)
+
+    if PLATFORM_CAMPAIGN in platforms:
         kvp["campaign"] = c._id
         print "done campaign"
+
+    if PLATFORM_BLOG in platforms:
+        kvp["blog"] = c._id
+        print "done blog"
 
     if PLATFORM_FACEBOOK in platforms:
         fb_user = get_fb_user(user_id, brand_name)
@@ -88,10 +94,6 @@ def put_campaign_data():
         #page_update = put_fsq_update(title, brand_obj.foursquare["venues"][0], brand_obj.foursquare["access_token"], state)
         print "done foursquare"
 
-    if PLATFORM_BLOG in platforms:
-        #todo : waiting for articles implementation
-        pass
-
     if PLATFORM_PUSH in platforms:
         #todo : waiting for push implementation
         pass
@@ -111,7 +113,11 @@ def get_campaign():
 
 
 def del_campaign():
-    pass
+
+    campaign_list = request.args.get("campaign_list")
+    print campaign_list
+
+    return jsonify({"status": "ok"})
 
 
 def _register_api(app):

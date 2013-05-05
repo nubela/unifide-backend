@@ -19,8 +19,8 @@ BASE_MENU = [
              "name": "CAMPAIGN",
              "sub-menu":
                   [
-                      {"name": "New Promotion", "link": "/campaign/new/promo", "order": "0"},
-                      {"name": "New Event", "link": "/campaign/new/event", "order": "1"},
+                      {"name": "New Promotion", "link": "/campaign/promo/new", "order": "0"},
+                      {"name": "New Event", "link": "/campaign/event/new", "order": "1"},
                       {"name": "divider", "link": "", "order": "2"},
                       {"name": "Manage", "link": "/campaign", "order": "3"}
                   ]},
