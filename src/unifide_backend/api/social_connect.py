@@ -248,7 +248,7 @@ def connect_twitter():
 
 def del_twitter_user():
     """
-    (DELETE: social_connect/twitter/user
+    (DELETE: social_connect/twitter/user)
     """
     from unifide_backend.action.social.twitter.action import del_twitter_user
 
@@ -259,6 +259,22 @@ def del_twitter_user():
 
     return jsonify({"status": "ok"})
 
+
+def put_twitter_tweet():
+    """
+    (PUT: social_connect/twitter/tweet)
+    """
+    from unifide_backend.action.social.twitter.action import get_tw_user, post_tweet_reply
+    print "getting arguments"
+    user_id = request.form.get("user_id")
+    brand_name = request.form.get("brand_name")
+    in_reply_to = request.form.get("in_reply_to")
+    text = request.form.get("text")
+
+    tw_user, access_token = get_tw_user(user_id, brand_name)
+    post_tweet_reply(text, tw_user.tw_id, in_reply_to, access_token["key"], access_token["secret"])
+
+    return jsonify({"status": "ok"})
 
 def auth_foursquare():
     """
@@ -410,6 +426,9 @@ def _register_api(app):
 
     app.add_url_rule('/social_connect/twitter/user/',
         "del_twitter_user", del_twitter_user, methods=['DELETE'])
+
+    app.add_url_rule('/social_connect/twitter/tweet/',
+        "put_twitter_tweet", put_twitter_tweet, methods=['PUT'])
 
     app.add_url_rule('/social_connect/foursquare/auth/',
         "auth_foursquare", auth_foursquare, methods=['GET'])

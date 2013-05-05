@@ -1,5 +1,7 @@
 import bz2
 import dateutil.parser as dateparser
+from datetime import datetime
+from HTMLParser import HTMLParser
 
 
 def unix_time(dt):
@@ -38,3 +40,27 @@ def generator_to_list(gen):
         except StopIteration:
             break
     return lis
+
+
+def isoformat(epoch):
+    return datetime.utcfromtimestamp(epoch).isoformat()
+
+
+def replace_newline(str):
+    return str.replace('<br>', '\n')
+
+
+class MLStripper(HTMLParser):
+    def __init__(self):
+        self.reset()
+        self.fed = []
+    def handle_data(self, d):
+        self.fed.append(d)
+    def get_data(self):
+        return ''.join(self.fed)
+
+
+def strip_tags(html):
+    s = MLStripper()
+    s.feed(HTMLParser().unescape(html))
+    return s.get_data()

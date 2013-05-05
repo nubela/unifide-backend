@@ -13,9 +13,7 @@ BASE_MENU = [
                       {"name": "Foursquare", "link": "/foursquare/venue/activity", "order": "4"},
                       {"name": "Brand Mention", "link": "/brand-mention", "order": "5"},
                       {"name": "divider", "link": "", "order": "6"},
-                      {"name": "Web", "link": "/web-platform", "order": "7"},
-                      {"name": "iOS", "link": "/ios-platform", "order": "8"},
-                      {"name": "Android", "link": "/android-platform", "order": "9"}
+                      {"name": "Web", "link": "/web", "order": "7"}
                    ]},
             {"order": 1,
              "name": "CAMPAIGN",

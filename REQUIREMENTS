@@ -7,3 +7,4 @@ Flask==0.9
 pymongo==2.5
 py-lorem==1.2
 pil==1.1.7
+unidecode

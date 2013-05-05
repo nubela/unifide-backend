@@ -11,11 +11,12 @@ def save(mapping_obj):
     return id
 
 
-def put_mapping(uid, brand_name, kvp, publish_datetime, state):
+def put_mapping(uid, brand_name, kvp, publish_datetime, type, state):
     mapping_obj = Mapping()
     mapping_obj.uid = uid
     mapping_obj.brand_name = brand_name
     mapping_obj.state = state
+    mapping_obj.type = type
     mapping_obj.publish_datetime = publish_datetime
 
     for k,v in kvp.iteritems():
