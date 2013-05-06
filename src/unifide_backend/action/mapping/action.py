@@ -11,11 +11,12 @@ def save(mapping_obj):
     return id
 
 
-def put_mapping(uid, brand_name, kvp, publish_datetime, state):
+def put_mapping(uid, brand_name, kvp, publish_datetime, type, state):
     mapping_obj = Mapping()
     mapping_obj.uid = uid
     mapping_obj.brand_name = brand_name
     mapping_obj.state = state
+    mapping_obj.type = type
     mapping_obj.publish_datetime = publish_datetime
 
     for k,v in kvp.iteritems():
@@ -31,6 +32,13 @@ def get_mapping(mapping_obj_id):
         return None
     dic = collection.find_one({"_id": coerce_bson_id(mapping_obj_id)})
     return Mapping.unserialize(dic) if dic is not None else None
+
+
+def del_mapping(mapping_obj_id):
+    collection = Mapping.collection()
+    if mapping_obj_id is None:
+        return None
+    dic = collection.update({"_id": coerce_bson_id(mapping_obj_id)}, {"$set": {"is_deleted": 1} })
 
 
 def get_brand_mapping(user_id, brand_name):

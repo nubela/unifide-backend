@@ -1,6 +1,7 @@
+import foursquare
+import datetime
 from threading import Thread
 
-import foursquare
 from unifide_backend.local_config import FSQ_CLIENT_ID, FSQ_CLIENT_SECRET, FSQ_REDIRECT_URI
 from unifide_backend.action.social.foursquare.model import FSQUser, FSQVenue, FSQTip, FSQCheckin, FSQPageUpdate
 from unifide_backend.action.util import key_check
@@ -125,9 +126,11 @@ def del_fsq_user(user_id, brand_name):
 
 
 def put_fsq_update(shout, venue_id, access_token, state):
+    datetime_now = datetime.datetime.utcnow().isoformat('T')
     page_update = FSQPageUpdate()
     page_update.venue_id = venue_id
     page_update.shout = shout
+    page_update.createdAt = datetime_now
     print shout, venue_id, access_token
 
     if state == CampaignState.PUBLISHED:

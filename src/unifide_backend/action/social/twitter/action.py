@@ -1,11 +1,15 @@
+import datetime
+import tweepy
+from threading import Thread
+from tweepy.cursor import Cursor
+from flask.helpers import json
+
+from base.util import coerce_bson_id
 from unifide_backend.local_config import TW_CONSUMER_KEY, TW_CONSUMER_SECRET, ADD_USER_MAX_TWEET, TW_INDIVIDUAL_STREAM
 from unifide_backend.action.social.twitter.model import TWUser, TWTweet
 from unifide_backend.action.mapping.action import update_brand_mapping
 from unifide_backend.action.mapping.model import BrandMapping, CampaignState
-from threading import Thread
-import tweepy
-from tweepy.cursor import Cursor
-from flask.helpers import json
+
 
 def get_api(key, secret):
     """
@@ -93,6 +97,7 @@ def save_tweet(status, tw_id):
     tweet_obj.tweet_id = status.id_str
     tweet_obj.tw_id = tw_id
     tweet_obj.user = status_dict["user"]
+    tweet_obj.text = status_dict["text"]
     tweet_obj.fields = status_dict
     tweet_obj.created_at = status.created_at
 
@@ -106,9 +111,11 @@ def save_tweet(status, tw_id):
 
 
 def put_tweet(text, tw_id, key, secret, state):
+    datetime_now = datetime.datetime.utcnow().isoformat('T')
     tw = TWTweet()
     tw.tw_id = tw_id
     tw.text = text
+    tw.created_at = datetime_now
 
     if state == CampaignState.PUBLISHED:
         api = get_api(key, secret)[0]
@@ -117,6 +124,21 @@ def put_tweet(text, tw_id, key, secret, state):
     else:
         tw._id = TWTweet.collection().insert(tw.serialize())
 
+    return tw
+
+
+def del_tweet(id_str, obj_id, key, secret):
+    if id_str is not None:
+        api = get_api(key, secret)[0]
+        data = api.destroy_status(id=long(id_str))
+        print data
+    TWTweet.collection().update({"_id": coerce_bson_id(obj_id)}, {"$set": {"is_deleted": 1}})
+
+
+def post_tweet_reply(text, tw_id, in_reply_to, key, secret):
+    api = get_api(key, secret)[0]
+    data = api.update_status(status=text, in_reply_to_status_id=in_reply_to)
+    tw = save_tweet(data, tw_id)
     return tw
 
 

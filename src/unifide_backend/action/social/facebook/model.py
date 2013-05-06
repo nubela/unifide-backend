@@ -65,8 +65,11 @@ class FBGroup(Base):
 class FBEvent(Base):
     def __init__(self, **kwargs):
         self.event_id = None
-        self.name = None
+        self.page_id = None
+        self.owner = None
         self.fields = None
+        self.created_time = None
+        self.updated_time = None
 
         for k, v in kwargs.iteritems():
             setattr(self, k, v)
