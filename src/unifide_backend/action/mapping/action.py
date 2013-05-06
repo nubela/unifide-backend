@@ -34,6 +34,13 @@ def get_mapping(mapping_obj_id):
     return Mapping.unserialize(dic) if dic is not None else None
 
 
+def del_mapping(mapping_obj_id):
+    collection = Mapping.collection()
+    if mapping_obj_id is None:
+        return None
+    dic = collection.update({"_id": coerce_bson_id(mapping_obj_id)}, {"$set": {"is_deleted": 1} })
+
+
 def get_brand_mapping(user_id, brand_name):
     collection = BrandMapping.collection()
     if user_id is None or brand_name is None:

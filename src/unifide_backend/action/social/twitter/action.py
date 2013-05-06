@@ -4,6 +4,7 @@ from threading import Thread
 from tweepy.cursor import Cursor
 from flask.helpers import json
 
+from base.util import coerce_bson_id
 from unifide_backend.local_config import TW_CONSUMER_KEY, TW_CONSUMER_SECRET, ADD_USER_MAX_TWEET, TW_INDIVIDUAL_STREAM
 from unifide_backend.action.social.twitter.model import TWUser, TWTweet
 from unifide_backend.action.mapping.action import update_brand_mapping
@@ -126,11 +127,18 @@ def put_tweet(text, tw_id, key, secret, state):
     return tw
 
 
+def del_tweet(id_str, obj_id, key, secret):
+    if id_str is not None:
+        api = get_api(key, secret)[0]
+        data = api.destroy_status(id=long(id_str))
+        print data
+    TWTweet.collection().update({"_id": coerce_bson_id(obj_id)}, {"$set": {"is_deleted": 1}})
+
+
 def post_tweet_reply(text, tw_id, in_reply_to, key, secret):
     api = get_api(key, secret)[0]
     data = api.update_status(status=text, in_reply_to_status_id=in_reply_to)
     tw = save_tweet(data, tw_id)
-
     return tw
 
 

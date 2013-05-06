@@ -5,12 +5,12 @@
 import datetime
 from threading import Thread
 
+from base.util import coerce_bson_id
 from unifide_backend.local_config import FB_APP_ID
 from unifide_backend.action.social.facebook.sdk import GraphAPI
 from unifide_backend.action.social.facebook.model import FBUser, FBPage, FBPost, FBComment, FBEvent
 from unifide_backend.action.mapping.action import update_brand_mapping
 from unifide_backend.action.mapping.model import BrandMapping, CampaignState
-
 from unifide_backend.action.util import isoformat, replace_newline, strip_tags
 
 
@@ -277,3 +277,50 @@ def put_fb_event(page, fb_id, state, title, description, start_time, end_time, a
         event._id = FBEvent.collection().insert(event.serialize())
 
     return event
+
+def update_fb_event(event_id, page, state, title, description, start_time, end_time, attachment={}):
+    datetime_now = datetime.datetime.utcnow().isoformat('T')
+    event = FBEvent.collection().find_one({"event_id": event_id})
+    event["fields"]["name"] = title
+    event["fields"]["description"] = description
+    event["updated_time"] = datetime_now
+
+    if start_time is not None:
+        event["fields"]["start_time"] = isoformat(start_time)
+    if end_time is not None:
+        event["fields"]["end_time"] = isoformat(end_time)
+
+    if state == CampaignState.PUBLISHED:
+        api = GraphAPI(page["access_token"])
+        url = event_id
+
+        dict = {
+            "name": title,
+            "start_time": isoformat(start_time) + "Z",
+            "description": strip_tags(replace_newline(description))
+        }
+
+        if end_time is not None:
+            dict["end_time"] = isoformat(end_time) + "Z"
+
+        api.request(url, post_args=dict)
+        event_data = api.request(event_id)
+        event = save_fb_event(event_data, page["id"])
+    else:
+        FBEvent.collection().update({"event_id": event_id}, {"$set": {event}})
+        event = FBEvent.unserialize(FBEvent.collection().find_one({"event_id": event_id}))
+
+    return event
+
+def del_fb_post(post_id, obj_id, access_token):
+    if post_id is not None:
+        data = GraphAPI(access_token).delete_object(post_id)
+        print data
+    FBPost.collection().update({"_id": coerce_bson_id(obj_id)}, {"$set": {"is_deleted": 1}})
+
+
+def del_fb_event(event_id, obj_id, access_token):
+    if event_id is not None:
+        data = GraphAPI(access_token).delete_object(event_id)
+        print data
+    FBEvent.collection().update({"_id": coerce_bson_id(obj_id)}, {"$set": {"is_deleted": 1}})

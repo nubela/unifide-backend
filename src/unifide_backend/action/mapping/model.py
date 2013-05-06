@@ -16,6 +16,7 @@ class Mapping(SchedulingBase):
         self.foursquare = None
         self.campaign = None
         self.blog = None
+        self.push = None
         self.type = None
         self.state = None
 
