@@ -31,7 +31,7 @@ BASE_MENU = [
                   [
                       {"name": "Business Info", "link": "/bizinfo", "order": "0"},
                       {"name": "Blog", "link": "/blog", "order": "1"},
-                      {"name": "Reservations", "link": "/reservation", "order": "2"},
+                      {"name": "Orders", "link": "/order", "order": "2"},
                       {"name": "divider", "link": "", "order": "3"},
                       {"name": "Items", "link": "/items", "order": "4"}
                   ]}
