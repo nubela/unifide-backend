@@ -142,6 +142,13 @@ def post_tweet_reply(text, tw_id, in_reply_to, key, secret):
     return tw
 
 
+def update_profile(key, secret, name=None, url=None, location=None, description=None):
+    api = get_api(key, secret)[0]
+    data = api.update_profile(name=name, url=url, location=location, description=description)
+
+
+
+# live updates
 def activate_stream(user_id, brand_name):
     """
     Activate twitter user stream

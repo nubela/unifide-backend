@@ -143,3 +143,24 @@ def put_fsq_update(shout, venue_id, access_token, state):
         print data
 
     pass
+
+
+def update_venue(venue_id, access_token, name=None, address=None, phone=None, description=None, hours=None):
+    url = "%s/%s/%s" % ('venues', venue_id, 'edit')
+    api = FoursquareAPI(access_token)
+    dict = {}
+
+    if name is not None:
+        dict["name"] = name
+    if address is not None:
+        dict["address"] = address
+    if phone is not None:
+        dict["phone"] = phone
+    if description is not None:
+        dict["description"] = description
+    if hours is not None:
+        pass
+
+    print dict
+    data = api.request(url, post_args=dict)
+    print data

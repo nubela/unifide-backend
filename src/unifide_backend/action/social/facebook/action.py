@@ -324,3 +324,20 @@ def del_fb_event(event_id, obj_id, access_token):
         data = GraphAPI(access_token).delete_object(event_id)
         print data
     FBEvent.collection().update({"_id": coerce_bson_id(obj_id)}, {"$set": {"is_deleted": 1}})
+
+def update_page_attr(page_id, access_token, profile_photo=None, cover_photo=None, about=None, description=None, website=None, phone=None, hours=None):
+    url = page_id
+    api = GraphAPI(access_token)
+    dict = {}
+    if about is not None:
+        dict["about"] = about
+    if description is not None:
+        dict["description"] = description
+    if website is not None:
+        dict["website"] = website
+    if phone is not None:
+        dict["phone"] = phone
+    if hours is not None:
+        pass
+
+    data = api.request(url, post_args=dict)
