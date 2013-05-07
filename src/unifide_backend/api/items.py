@@ -1,5 +1,5 @@
 from flask import request, json, jsonify, redirect
-from base import items
+from base import items, tags
 from base.items import ItemStatus, Item, container_path
 from base.items.action import container_from_path
 from base.media.action import save_image, save_media
@@ -53,22 +53,28 @@ def put_item():
     price = request.form.get("price", None)
     quantity = request.form.get("quantity", None)
     status = request.form.get("status", ItemStatus.VISIBLE)
-    extra_json = request.form.get("extra_attributes", None)
-    extra_attr = json.loads(extra_json) if extra_json is not None else None
-
-    #files
-    media_file = request.files.get("media_file")
-
-    #others
     redirect_url = request.form.get("redirect_to", None)
 
-    #save media
-    if media_file.filename != "":
-        print "got it"
-        if request.files.get("media_file").mimetype in ["image/png", "image/gif", "image/jpeg", "image/jpg"]:
-            media_obj = save_image(media_file, UPLOAD_METHOD)
-        else:
-            media_obj = save_media(media_file, UPLOAD_METHOD)
+    #extras
+    custom_attr_json = request.form.get("custom_attr_lis", None)
+    custom_attr = json.loads(custom_attr_json) if custom_attr_json is not None else []
+    tags_json = request.form.get("tags", None)
+    custom_tags = json.loads(tags_json) if tags_json is not None else []
+    custom_media_json = request.form.get("custom_media_lis", None)
+    custom_media = json.loads(custom_media_json) if custom_media_json is not None else []
+
+    #handle files
+    file_media_map = {}
+    files = ["media_file"] + custom_media
+    for f in files:
+        media_file = request.files.get(f)
+        media_obj = None
+        if media_file.filename != "":
+            if request.files.get("media_file").mimetype in ["image/png", "image/gif", "image/jpeg", "image/jpg"]:
+                media_obj = save_image(media_file, UPLOAD_METHOD)
+            else:
+                media_obj = save_media(media_file, UPLOAD_METHOD)
+        file_media_map[f] = media_obj
 
     #create item obj
     item_obj = Item()
@@ -78,13 +84,23 @@ def put_item():
     item_obj.price = price
     item_obj.container_id = container_obj.obj_id()
     item_obj.status = status
-    item_obj.media_id = media_obj.obj_id() if media_file.filename != "" else None
-    if extra_attr is not None:
-        for k, v in extra_attr.items():
-            setattr(item_obj, k, v)
+    item_obj.custom_attr_lis = custom_attr
+    item_obj.custom_media_lis = custom_media
+    item_obj.media_id = media_obj.obj_id() if request.files.get("media_file").filename != "" else None
+    for k, v in file_media_map.items():
+        if k == "media_file": continue
+        if hasattr(item_obj, k): continue
+        setattr(item_obj, k, v.obj_id() if v is not None else None)
+    for k in custom_attr:
+        if hasattr(item_obj, k): continue
+        setattr(item_obj, k, request.form.get(k, None))
 
     #save it
-    Item.collection().save(item_obj.serialize())
+    item_obj._id = items.save(item_obj)
+
+    #tag it
+    for tag_name in custom_tags:
+        tags.tag(item_obj, tag_name)
 
     if redirect_url is not None:
         return redirect(redirect_url)
