@@ -40,11 +40,65 @@ def put_container():
     })
 
 
+def new_item(container_obj, custom_attr, custom_media, custom_tags, description, file_media_map, media_obj, name, price,
+             quantity, status):
+    item_obj = Item()
+    item_obj.name = name
+    item_obj.description = description
+    item_obj.quantity = quantity
+    item_obj.price = price
+    item_obj.container_id = container_obj.obj_id()
+    item_obj.status = status
+    item_obj.custom_attr_lis = custom_attr
+    item_obj.custom_media_lis = custom_media
+    item_obj.media_id = media_obj.obj_id() if request.files.get("media_file").filename != "" else None
+    for k, v in file_media_map.items():
+        if k == "media_file": continue
+        if hasattr(item_obj, k): continue
+        setattr(item_obj, k, v.obj_id() if v is not None else None)
+    for k in custom_attr:
+        if hasattr(item_obj, k): continue
+        setattr(item_obj, k, request.form.get(k, None))
+
+    #save it
+    item_obj._id = items.save(item_obj)
+
+    #tag it
+    for tag_name in custom_tags:
+        tags.tag(item_obj, tag_name)
+
+
+def update_item(custom_attr, custom_media, custom_tags, description, file_media_map, name, obj_id, price, quantity):
+    item_obj = items.get(obj_id)
+    item_obj.name = name
+    item_obj.description = description
+    item_obj.price = price
+    item_obj.quantity = quantity
+    item_obj.custom_attr_lis = custom_attr
+    item_obj.custom_media_lis = custom_media
+    if request.files.get("media_file").filename != "":
+        item_obj.media_id = file_media_map["media_file"].obj_id()
+    for k, v in file_media_map.items():
+        if k == "media_file": continue
+        if v is not None:
+            setattr(item_obj, k, v.obj_id())
+    for k in custom_attr:
+        setattr(item_obj, k, request.form.get(k, None))
+    items.save(item_obj)
+    #remove all tags
+    tags.clear(item_obj)
+    #tag it
+    print custom_tags
+    for tag_name in custom_tags:
+        tags.tag(item_obj, tag_name)
+
+
 def put_item():
     """
     (PUT: item)
     """
     #attributes
+    obj_id = request.form.get("id", None)
     path_lis_json = request.form.get("path_lis", None)
     path_lis = json.loads(path_lis_json) if path_lis_json is not None else None
     container_obj = container_from_path(container_path(path_lis))
@@ -76,34 +130,15 @@ def put_item():
                 media_obj = save_media(media_file, UPLOAD_METHOD)
         file_media_map[f] = media_obj
 
-    #create item obj
-    item_obj = Item()
-    item_obj.name = name
-    item_obj.description = description
-    item_obj.quantity = quantity
-    item_obj.price = price
-    item_obj.container_id = container_obj.obj_id()
-    item_obj.status = status
-    item_obj.custom_attr_lis = custom_attr
-    item_obj.custom_media_lis = custom_media
-    item_obj.media_id = media_obj.obj_id() if request.files.get("media_file").filename != "" else None
-    for k, v in file_media_map.items():
-        if k == "media_file": continue
-        if hasattr(item_obj, k): continue
-        setattr(item_obj, k, v.obj_id() if v is not None else None)
-    for k in custom_attr:
-        if hasattr(item_obj, k): continue
-        setattr(item_obj, k, request.form.get(k, None))
-
-    #save it
-    item_obj._id = items.save(item_obj)
-
-    #tag it
-    for tag_name in custom_tags:
-        tags.tag(item_obj, tag_name)
+    if obj_id is None:
+        new_item(container_obj, custom_attr, custom_media, custom_tags, description, file_media_map, media_obj, name,
+                 price, quantity, status)
+    else:
+        update_item(custom_attr, custom_media, custom_tags, description, file_media_map, name, obj_id, price, quantity)
 
     if redirect_url is not None:
         return redirect(redirect_url)
+
     return jsonify({
         "status": "ok",
     })
