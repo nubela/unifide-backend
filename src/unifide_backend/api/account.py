@@ -22,16 +22,20 @@ def put_account_user():
     return jsonify({"status": "ok"})
 
 
-def put_account_passwd():
-    pass
-
-
 def put_account_info():
-    pass
+    """
+    (PUT: account/info)
+    """
+    from unifide_backend.action.cp.action import update_info
 
+    user_id = request.form.get("user_id")
+    brand_name = request.form.get("brand_name")
+    new_brand_name = request.form.get("new_brand_name")
+    email = request.form.get("email")
 
-def get_account_info():
-    pass
+    update_info(user_id, brand_name, new_brand_name, email)
+    print "done"
+    return jsonify({"status": "ok"})
 
 
 def _register_api(app):
@@ -42,11 +46,6 @@ def _register_api(app):
     app.add_url_rule('/account/user/',
                      "put_account_user", put_account_user, methods=['PUT'])
 
-    app.add_url_rule('/account/password/',
-                     "put_account_passwd", put_account_passwd, methods=['PUT'])
 
     app.add_url_rule('/account/info/',
                      "put_account_info", put_account_info, methods=['PUT'])
-
-    app.add_url_rule('/account/info/',
-                     "get_account_info", get_account_info, methods=['GET'])
