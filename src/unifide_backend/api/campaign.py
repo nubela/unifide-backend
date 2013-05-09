@@ -1,4 +1,5 @@
 import datetime
+import traceback
 
 from flask.globals import request
 from flask.helpers import json, jsonify
@@ -91,8 +92,8 @@ def put_campaign_data():
         print "done twitter"
 
     if PLATFORM_FOURSQUARE in platforms:
-        #todo : error accessing API endpoint for page updates
-        #page_update = put_fsq_update(title, brand_obj.foursquare["venues"][0], brand_obj.foursquare["access_token"], state)
+        page_update = put_fsq_update(title, brand_obj.foursquare["venues"][0], brand_obj.foursquare["access_token"], state)
+        kvp[PLATFORM_FOURSQUARE] = page_update._id
         print "done foursquare"
 
     if PLATFORM_PUSH in platforms:
@@ -161,9 +162,11 @@ def del_campaign():
     from campaigns.campaign.model import Campaign
     from unifide_backend.action.social.facebook.model import FBPost, FBEvent
     from unifide_backend.action.social.twitter.model import TWTweet
+    from unifide_backend.action.social.foursquare.model import FSQPageUpdate
     from unifide_backend.action.mapping.action import del_mapping, get_brand_mapping, get_mapping
     from unifide_backend.action.social.facebook.action import del_fb_post, del_fb_event
     from unifide_backend.action.social.twitter.action import del_tweet
+    from unifide_backend.action.social.foursquare.action import del_fsq_update
 
     user_id = request.args.get("user_id")
     brand_name = request.args.get("brand_name")
@@ -179,23 +182,35 @@ def del_campaign():
         if mapping_obj.facebook is not None:
             id = mapping_obj.facebook
             post = FBPost.collection().find_one({"_id": coerce_bson_id(id)})
-            if post is not None:
-                print post
-                del_fb_post(post["post_id"], id, brand_obj.facebook["access_token"])
-            event = FBEvent.collection().find_one({"_id": coerce_bson_id(id)})
-            if event is not None:
-                del_fb_event(event["event_id"], id, brand_obj.facebook["access_token"])
+            try:
+                if post is not None:
+                    del_fb_post(post["post_id"], id, brand_obj.facebook["access_token"])
+                event = FBEvent.collection().find_one({"_id": coerce_bson_id(id)})
+                if event is not None:
+                    del_fb_event(event["event_id"], id, brand_obj.facebook["access_token"])
+            except Exception, err:
+                print traceback.format_exc()
+                print id
 
         # delete twitter status
         if mapping_obj.twitter is not None:
             id = mapping_obj.twitter
             tweet = TWTweet.collection().find_one({"_id": coerce_bson_id(id)})
-            del_tweet(tweet["fields"]["id_str"] if tweet["fields"] is not None else None, id, brand_obj.twitter["access_token"]["key"], brand_obj.twitter["access_token"]["secret"])
+            try:
+                del_tweet(tweet["fields"]["id_str"] if tweet["fields"] is not None else None, id, brand_obj.twitter["access_token"]["key"], brand_obj.twitter["access_token"]["secret"])
+            except Exception, err:
+                print traceback.format_exc()
+                print id
 
         # delete foursquare page update
         if mapping_obj.foursquare is not None:
-            # todo: foursquare implementation
-            pass
+            id = mapping_obj.foursquare
+            page_update = FSQPageUpdate.collection().find_one({"_id": coerce_bson_id(id)})
+            try:
+                del_fsq_update(page_update["update_id"] if page_update["update_id"] is not None else None, id, brand_obj.foursquare["access_token"])
+            except Exception, err:
+                print traceback.format_exc()
+                print id
 
         # delete campaign
         if mapping_obj.campaign is not None:

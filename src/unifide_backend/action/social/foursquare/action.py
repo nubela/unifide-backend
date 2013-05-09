@@ -2,6 +2,7 @@ import foursquare
 import datetime
 from threading import Thread
 
+from base.util import coerce_bson_id
 from unifide_backend.local_config import FSQ_CLIENT_ID, FSQ_CLIENT_SECRET, FSQ_REDIRECT_URI
 from unifide_backend.action.social.foursquare.model import FSQUser, FSQVenue, FSQTip, FSQCheckin, FSQPageUpdate
 from unifide_backend.action.util import key_check
@@ -131,15 +132,54 @@ def put_fsq_update(shout, venue_id, access_token, state):
     page_update.venue_id = venue_id
     page_update.shout = shout
     page_update.createdAt = datetime_now
-    print shout, venue_id, access_token
+    page_update.fields = {"shout": shout}
 
     if state == CampaignState.PUBLISHED:
+        venue = FSQVenue.collection().find_one({"venue_id": venue_id})
+
         url = "%s/%s" % ("pageupdates", "add")
         api = FoursquareAPI(access_token)
-        dict = {"pageId": venue_id,
+        dict = {"pageId": venue["fields"]["venue"]["venuePage"]["id"],
                 "venueId": venue_id,
                 "shout": shout}
         data = api.request(url, post_args=dict)
+        page_update.fields = data["response"]["pageUpdate"]
+        page_update.update_id = data["response"]["pageUpdate"]["id"]
+
+    page_update._id = FSQPageUpdate.collection().insert(page_update.serialize())
+    return page_update
+
+
+def del_fsq_update(update_id, obj_id, access_token):
+    if update_id is not None:
+        url = "%s/%s/%s" % ('pageupdates', update_id, 'delete')
+        api = FoursquareAPI(access_token)
+
+        dict = {"update_id": update_id}
+
+        data = api.request(url, post_args=dict)
         print data
 
-    pass
+    FSQPageUpdate.collection().update({"_id": coerce_bson_id(obj_id)}, {"$set": {"is_deleted": 1}})
+
+
+def update_venue(venue_id, access_token, name=None, address=None, phone=None, description=None, hours=None):
+    url = "%s/%s/%s" % ('venues', venue_id, 'edit')
+    api = FoursquareAPI(access_token)
+
+    dict = {}
+
+    if name is not None:
+        dict["name"] = name
+    if address is not None:
+        dict["address"] = address
+    if phone is not None:
+        dict["phone"] = phone
+    if description is not None:
+        dict["description"] = description
+    if hours is not None:
+        pass
+
+    print dict
+    data = api.request(url, post_args=dict)
+    print data

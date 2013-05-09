@@ -1,5 +1,9 @@
 from unifide_backend.action.cp.model import CPMenu, CPMenuItem
 from unifide_backend.action.admin.user.model import User
+from unifide_backend.action.mapping.model import Mapping, BrandMapping
+from unifide_backend.action.social.facebook.model import FBUser
+from unifide_backend.action.social.twitter.model import TWUser
+from unifide_backend.action.social.foursquare.model import FSQUser
 
 
 BASE_MENU = [
@@ -14,7 +18,7 @@ BASE_MENU = [
                       {"name": "Foursquare", "link": "/foursquare/venue/activity", "order": "4"},
                       {"name": "Brand Mention", "link": "/brand-mention", "order": "5"},
                       {"name": "divider", "link": "", "order": "6"},
-                      {"name": "Web / Mobile", "link": "/web", "order": "7"}
+                      {"name": "Web / Mobile", "link": "/web/campaign/activity", "order": "7"}
                    ]},
             {"order": 1,
              "name": "CAMPAIGN",
@@ -30,7 +34,7 @@ BASE_MENU = [
              "sub-menu":
                   [
                       {"name": "Business Info", "link": "/bizinfo", "order": "0"},
-                      {"name": "Blog", "link": "/blog", "order": "1"},
+                      {"name": "Comments", "link": "/comments", "order": "1"},
                       {"name": "Orders", "link": "/order", "order": "2"},
                       {"name": "divider", "link": "", "order": "3"},
                       {"name": "Items", "link": "/items", "order": "4"}
@@ -78,3 +82,14 @@ def put_new_user_menu(user_id):
         menu._id = CPMenu.collection().insert(menu.serialize())
 
     return menu
+
+
+def update_info(user_id, old_brand, new_brand, email):
+    if new_brand is not None:
+        Mapping.collection().update({"uid": user_id, "brand_name": old_brand}, {"$set": {"brand_name": new_brand}})
+        BrandMapping.collection().update({"uid": user_id, "brand_name": old_brand}, {"$set": {"brand_name": new_brand}})
+        FBUser.collection().update({"u_id": user_id, "brand_name": old_brand}, {"$set": {"brand_name": new_brand}})
+        TWUser.collection().update({"u_id": user_id, "brand_name": old_brand}, {"$set": {"brand_name": new_brand}})
+        FSQUser.collection().update({"u_id": user_id, "brand_name": old_brand}, {"$set": {"brand_name": new_brand}})
+    if email is not None:
+        User.collection().update({"_id": user_id}, {"$set": {"emails.0.address": email}})
