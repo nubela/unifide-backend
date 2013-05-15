@@ -122,28 +122,31 @@ def get_fb_posts(page_id, access_token, limit=200, since=None):
 
 def save_fb_post(post, page_id):
     post_obj = FBPost()
-    post_obj.post_id = post["id"]
-    post_obj.page_id = page_id
-    post_obj.owner = post["from"]
-    post_obj.created_time = post["created_time"]
-    post_obj.updated_time = post["updated_time"]
-    comments_list = post.pop("comments", None)
-    post_obj.fields = post
+    try:
+        post_obj.post_id = post["id"]
+        post_obj.page_id = page_id
+        post_obj.owner = post["from"]
+        post_obj.created_time = post["created_time"]
+        post_obj.updated_time = post["updated_time"]
+        comments_list = post.pop("comments", None)
+        post_obj.fields = post
 
-    def save_obj(post):
-        return FBPost.collection().save(post.serialize())
+        def save_obj(post):
+            return FBPost.collection().save(post.serialize())
 
-    dupe_obj = FBPost.collection().find_one({"post_id": str(post["id"])})
+        dupe_obj = FBPost.collection().find_one({"post_id": str(post["id"])})
 
-    if dupe_obj is None:
-        post_obj._id = save_obj(post_obj)
-    else:
-        FBPost.collection().update({"post_id": post["id"]}, post_obj.serialize())
-        post_obj = FBPost.unserialize(FBPost.collection().find_one({"post_id": post["id"]}))
+        if dupe_obj is None:
+            post_obj._id = save_obj(post_obj)
+        else:
+            FBPost.collection().update({"post_id": post["id"]}, post_obj.serialize())
+            post_obj = FBPost.unserialize(FBPost.collection().find_one({"post_id": post["id"]}))
 
-    if comments_list["count"] > 0:
-        for comment in comments_list["data"]:
-            save_fb_post_comment(comment, post_obj.post_id)
+            if comments_list["count"] > 0:
+                for comment in comments_list["data"]:
+                    save_fb_post_comment(comment, post_obj.post_id)
+    except:
+        pass
 
     return post_obj
 
@@ -278,6 +281,7 @@ def put_fb_event(page, fb_id, state, title, description, start_time, end_time, a
 
     return event
 
+
 def update_fb_event(event_id, page, state, title, description, start_time, end_time, attachment={}):
     datetime_now = datetime.datetime.utcnow().isoformat('T')
     event = FBEvent.collection().find_one({"event_id": event_id})
@@ -312,6 +316,7 @@ def update_fb_event(event_id, page, state, title, description, start_time, end_t
 
     return event
 
+
 def del_fb_post(post_id, obj_id, access_token):
     if post_id is not None:
         data = GraphAPI(access_token).delete_object(post_id)
@@ -325,7 +330,9 @@ def del_fb_event(event_id, obj_id, access_token):
         print data
     FBEvent.collection().update({"_id": coerce_bson_id(obj_id)}, {"$set": {"is_deleted": 1}})
 
-def update_page_attr(page_id, access_token, profile_photo=None, cover_photo=None, about=None, description=None, website=None, phone=None, hours=None):
+
+def update_page_attr(page_id, access_token, profile_photo=None, cover_photo=None, about=None, description=None,
+                     website=None, phone=None, hours=None):
     url = page_id
     api = GraphAPI(access_token)
     dict = {}

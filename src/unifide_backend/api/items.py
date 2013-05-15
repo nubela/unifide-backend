@@ -100,7 +100,7 @@ def put_item():
     #attributes
     obj_id = request.form.get("id", None)
     path_lis_json = request.form.get("path_lis", None)
-    path_lis = json.loads(path_lis_json) if path_lis_json is not None else None
+    path_lis = json.loads(path_lis_json) if path_lis_json is not None and path_lis_json != "" else None
     container_obj = container_from_path(container_path(path_lis))
     name = request.form.get("name")
     description = request.form.get("description")
@@ -111,7 +111,7 @@ def put_item():
 
     #extras
     custom_attr_json = request.form.get("custom_attr_lis", None)
-    custom_attr = json.loads(custom_attr_json) if custom_attr_json is not None else []
+    custom_attr = json.loads(custom_attr_json) if custom_attr_json is not None and custom_attr_json != "" else []
     tags_json = request.form.get("tags", None)
     custom_tags = json.loads(tags_json) if tags_json is not None else []
     custom_media_json = request.form.get("custom_media_lis", None)
@@ -130,7 +130,7 @@ def put_item():
                 media_obj = save_media(media_file, UPLOAD_METHOD)
         file_media_map[f] = media_obj
 
-    if obj_id is None:
+    if obj_id is None or obj_id == "":
         new_item(container_obj, custom_attr, custom_media, custom_tags, description, file_media_map, media_obj, name,
                  price, quantity, status)
     else:
@@ -139,6 +139,28 @@ def put_item():
     if redirect_url is not None:
         return redirect(redirect_url)
 
+    return jsonify({
+        "status": "ok",
+    })
+
+
+def del_item():
+    """
+    (PUT: item)
+    """
+    item_id = request.args.get("item_id")
+    items.remove(item_id)
+    return jsonify({
+        "status": "ok",
+    })
+
+
+def del_container():
+    """
+    (PUT: item)
+    """
+    container_id = request.args.get("container_id")
+    items.remove_container(container_id)
     return jsonify({
         "status": "ok",
     })
@@ -157,3 +179,9 @@ def _register_api(app):
 
     app.add_url_rule('/item/',
                      "put_item", put_item, methods=['PUT', 'POST'])
+
+    app.add_url_rule('/item/',
+                     "del_item", del_item, methods=['DELETE'])
+
+    app.add_url_rule('/container/',
+                     "del_container", del_container, methods=['DELETE'])

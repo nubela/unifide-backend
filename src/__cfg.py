@@ -62,8 +62,8 @@ API_TO_REGISTER = (
 )
 
 #facebook test user
-FB_TEST_USER = ""
-FB_TEST_PASSWORD = ""
+FB_TEST_USER = "fbmail@unifide.sg"
+FB_TEST_PASSWORD = "thisisnotsecureatall"
 
 #brand_mention alerts info
 GOOGLE_USERNAME = 'unifidetest@gmail.com'
