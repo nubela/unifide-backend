@@ -40,9 +40,19 @@ RESERVED_ITEM_CONTAINERS = {
         "description": None,
         "path_lis": ["Other Business Info"],
         "children": {
+            "Mobile Maps": {
+                "description": "Location Maps for mobile app",
+                "path_lis": ["Other Business Info", "Mobile Maps"],
+            },
+
             "Branch Addresses": {
                 "description": "For addresses of branches",
                 "path_lis": ["Other Business Info", "Branch Addresses"],
+            },
+
+            "Opening Hours": {
+                "description": "Your Business's Opening Hours",
+                "path_lis": ["Other Business Info", "Opening Hours"],
             }
         },
     },
