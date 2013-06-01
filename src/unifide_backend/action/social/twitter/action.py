@@ -110,7 +110,7 @@ def save_tweet(status, tw_id):
     return tweet_obj
 
 
-def put_tweet(text, tw_id, key, secret, state):
+def put_tweet(text, tw_id, key, secret, state, media_file):
     datetime_now = datetime.datetime.utcnow().isoformat('T')
     tw = TWTweet()
     tw.tw_id = tw_id
