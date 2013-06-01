@@ -74,15 +74,6 @@ def register(keyword, async=False):
         coll.save(kw_obj.serialize())
 
 
-def get_mentions(limit=None):
-    """
-    In no order particularly, fetches the latest list of alerts given registered
-    """
-    if limit is None:
-        limit = 5
-    pass
-
-
 def _update():
     """
     Polls the feeds to fetch the latest mentions
