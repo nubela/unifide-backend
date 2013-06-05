@@ -135,7 +135,7 @@ def put_campaign_data():
 
     if PLATFORM_TWITTER in platforms:
         tw_user = get_tw_user(user_id, brand_name)[0]
-        tweet = put_tweet(parsed_title, tw_user.tw_id, brand_obj.twitter["access_token"]["key"], brand_obj.twitter["access_token"]["secret"], state, image_io)
+        tweet = put_tweet(parsed_title, tw_user.tw_id, brand_obj.twitter["access_token"]["key"], brand_obj.twitter["access_token"]["secret"], state, url_for(media_obj) if media_obj is not None else file_path)
         kvp[PLATFORM_TWITTER] = tweet._id
         print "done twitter"
 
