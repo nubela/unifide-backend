@@ -3,6 +3,7 @@ import tweepy
 from threading import Thread
 from tweepy.cursor import Cursor
 from flask.helpers import json
+from twython import Twython
 
 from base.util import coerce_bson_id
 from unifide_backend.local_config import TW_CONSUMER_KEY, TW_CONSUMER_SECRET, ADD_USER_MAX_TWEET, TW_INDIVIDUAL_STREAM
@@ -91,15 +92,18 @@ def save_tweets(user_id, tw_id, brand_name):
         activate_stream(user_id, brand_name)
 
 
-def save_tweet(status, tw_id):
-    status_dict = json.loads(status.json)
+def save_tweet(status=None, status_json=None, tw_id=None):
+    if status is not None:
+        status_dict = json.loads(status.json)
+    else:
+        status_dict = status_json
     tweet_obj = TWTweet()
-    tweet_obj.tweet_id = status.id_str
+    tweet_obj.tweet_id = status_dict["id_str"]
     tweet_obj.tw_id = tw_id
     tweet_obj.user = status_dict["user"]
     tweet_obj.text = status_dict["text"]
     tweet_obj.fields = status_dict
-    tweet_obj.created_at = status.created_at
+    tweet_obj.created_at = datetime.datetime.utcnow()
 
     if TWTweet.collection().find_one({"tweet_id": tweet_obj.tweet_id, "tw_id": tweet_obj.tw_id}) is None:
         tweet_obj._id = TWTweet.collection().insert(tweet_obj.serialize())
@@ -110,7 +114,7 @@ def save_tweet(status, tw_id):
     return tweet_obj
 
 
-def put_tweet(text, tw_id, key, secret, state):
+def put_tweet(text, tw_id, key, secret, state, media_file):
     datetime_now = datetime.datetime.utcnow().isoformat('T')
     tw = TWTweet()
     tw.tw_id = tw_id
@@ -118,9 +122,14 @@ def put_tweet(text, tw_id, key, secret, state):
     tw.created_at = datetime_now
 
     if state == CampaignState.PUBLISHED:
-        api = get_api(key, secret)[0]
-        data = api.update_status(text)
-        tw = save_tweet(data, tw_id)
+        if media_file is None:
+            api = get_api(key, secret)[0]
+            data = api.update_status(text)
+            tw = save_tweet(status=data, tw_id=tw_id)
+        else:
+            api = Twython(TW_CONSUMER_KEY, TW_CONSUMER_SECRET, key, secret)
+            data = api.update_status_with_media(media=open(media_file, 'rb'), status=text)
+            tw = save_tweet(status_json=data, tw_id=tw_id)
     else:
         tw._id = TWTweet.collection().insert(tw.serialize())
 

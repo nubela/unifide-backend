@@ -43,6 +43,13 @@ import hmac
 import base64
 import logging
 import socket
+import cookielib
+import types
+import mimetools
+import mimetypes
+import os, stat
+
+from urllib import urlencode
 
 # Find a JSON parser
 try:
@@ -233,6 +240,44 @@ class GraphAPI(object):
 
         return response
 
+    def put_event(self, params, **kwargs):
+        """Uploads an image using multipart/form-data.
+
+        image=File like object for the image
+        message=Caption for your image
+        album_id=None posts to /me/photos which uses or creates and uses
+        an album for your application.
+
+        """
+        object_id = "me"
+        #it would have been nice to reuse self.request;
+        #but multipart is messy in urllib
+        post_args = params
+        post_args.update(kwargs)
+        content_type, body = self._encode_multipart_form(post_args)
+        req = urllib2.Request(("https://graph.facebook.com/%s/events" %
+                               object_id),
+                              data=body)
+        req.add_header('Content-Type', content_type)
+        try:
+            data = urllib2.urlopen(req).read()
+        #For Python 3 use this:
+        #except urllib2.HTTPError as e:
+        except urllib2.HTTPError, e:
+            data = e.read()  # Facebook sends OAuth errors as 400, and urllib2
+                             # throws an exception, we want a GraphAPIError
+        try:
+            response = _parse_json(data)
+            # Raise an error if we got one, but don't not if Facebook just
+            # gave us a Bool value
+            if (response and isinstance(response, dict) and
+                    response.get("error")):
+                raise GraphAPIError(response)
+        except ValueError:
+            response = data
+
+        return response
+
     # based on: http://code.activestate.com/recipes/146306/
     def _encode_multipart_form(self, fields):
         """Encode files as 'multipart/form-data'.
@@ -400,6 +445,24 @@ class GraphAPI(object):
             response = json.loads(response)
             raise GraphAPIError(response)
 
+    def graph_post(self, object_id, params=None):
+        """Send a POST request to the graph api.
+
+        You can also upload files using this function.  For example:
+
+          >>> graph_post('/me/photos',
+          ...            {'name': 'My Photo',
+          ...             'source': open("myphoto.jpg")})
+
+        """
+        opener = urllib2.build_opener(
+            urllib2.HTTPCookieProcessor(cookielib.CookieJar()),
+            _MultipartPostHandler)
+        print ("https://graph.facebook.com/%s/photos" %
+                               object_id)
+        return json.load(opener.open(("https://graph.facebook.com/%s/photos" %
+                               object_id), params))
+
 
 class GraphAPIError(Exception):
     def __init__(self, result):
@@ -564,3 +627,53 @@ def get_app_access_token(app_id, app_secret):
         file.close()
 
     return result
+
+
+class _MultipartPostHandler(urllib2.BaseHandler):
+    handler_order = urllib2.HTTPHandler.handler_order - 10 # needs to run first
+
+    def http_request(self, request):
+        data = request.get_data()
+        if data is not None and not isinstance(data, types.StringTypes):
+            files = []
+            params = []
+            try:
+                for key, value in data.items():
+                    if isinstance(value, types.FileType):
+                        files.append((key, value))
+                    else:
+                        params.append((key, value))
+            except TypeError:
+                raise TypeError("not a valid non-string sequence or mapping object")
+
+            if len(files) == 0:
+                data = urlencode(params)
+            else:
+                boundary, data = self.multipart_encode(params, files)
+                contenttype = 'multipart/form-data; boundary=%s' % boundary
+                request.add_unredirected_header('Content-Type', contenttype)
+
+            request.add_data(data)
+        return request
+
+    https_request = http_request
+
+    def multipart_encode(self, params, files, boundary=None, buffer=None):
+        boundary = boundary or mimetools.choose_boundary()
+        buffer = buffer or ''
+        for key, value in params:
+            buffer += '--%s\r\n' % boundary
+            buffer += 'Content-Disposition: form-data; name="%s"' % key
+            buffer += '\r\n\r\n' + value + '\r\n'
+        for key, fd in files:
+            file_size = os.fstat(fd.fileno())[stat.ST_SIZE]
+            filename = fd.name.split('/')[-1]
+            contenttype = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+            buffer += '--%s\r\n' % boundary
+            buffer += 'Content-Disposition: form-data; '
+            buffer += 'name="%s"; filename="%s"\r\n' % (key, filename)
+            buffer += 'Content-Type: %s\r\n' % contenttype
+            fd.seek(0)
+            buffer += '\r\n' + fd.read() + '\r\n'
+        buffer += '--%s--\r\n\r\n' % boundary
+        return boundary, buffer
