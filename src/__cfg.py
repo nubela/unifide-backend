@@ -42,7 +42,7 @@ FB_REALTIME_TOKEN = "thisisnotsecureatall1987"
 TW_CONSUMER_KEY = "dB4v3wKk52LIRz6SRSZTJQ"
 TW_CONSUMER_SECRET = "IkfpGDZteinlSBY3iNKwrtuEarB6sZA8U6rbZXJ7h4U"
 TW_REDIRECT_URI = "http://127.0.0.1:3000/account/auth/twitter/"
-TW_INDIVIDUAL_STREAM = True
+TW_INDIVIDUAL_STREAM = False
 ADD_USER_MAX_TWEET = 50
 
 #foursquare app info
@@ -82,3 +82,20 @@ CLOUDFRONT_URL = "http://d1boersyg287yp.cloudfront.net/"
 UPLOAD_FOLDER = "/Users/nubela/Workspace/unifide-backend/resources"
 UPLOAD_METHOD = "local" #or s3
 UPLOAD_RELATIVE_ENDPOINT = "resources"
+
+#campaigns
+DOMAIN_PATH = "http://www.unifide.sg/"
+URL_IGNORE_KEYWORD = [
+    "and",
+    "a",
+    "an",
+    "the",
+    "on"
+]
+CAMPAIGN_TYPE = [
+    "facebook",
+    "twitter",
+    "foursquare",
+    "web",
+    "blog"
+]

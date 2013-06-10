@@ -1,7 +1,9 @@
 import bz2
+import re
 import dateutil.parser as dateparser
-from datetime import datetime
+from datetime import datetime, date
 from HTMLParser import HTMLParser
+from cfg import URL_IGNORE_KEYWORD
 
 
 def unix_time(dt):
@@ -64,3 +66,18 @@ def strip_tags(html):
     s = MLStripper()
     s.feed(HTMLParser().unescape(html))
     return s.get_data()
+
+
+def url_generator(relative_path, string):
+    url = relative_path + str(datetime.now().year) + "/" + str('%02d' % datetime.now().month) + "/"
+
+    for word in URL_IGNORE_KEYWORD:
+        pattern = re.compile(" " + word + " ", re.IGNORECASE)
+        pattern.sub('', string)
+    string = re.sub(' +', ' ', string)
+    str_list = string.split()
+    for w in str_list:
+        w = re.sub(r'\W+', '', w)
+    url += "-".join(str_list)
+
+    return url

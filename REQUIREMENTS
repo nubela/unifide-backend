@@ -9,3 +9,4 @@ py-lorem==1.2
 pil==1.1.7
 validate_email==1.1
 unidecode
+Twython
