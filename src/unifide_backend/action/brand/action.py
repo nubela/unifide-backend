@@ -18,5 +18,5 @@ class CampaignChannels:
     TWITTER = "twitter"
     FOURSQUARE = "foursquare"
     BLOG = "blog"
-    WEB_MOBILE = "web_and_mobile"
-    PUSH_NOTIFICATION = "push_notification"
+    WEB_MOBILE = "web"
+    PUSH_NOTIFICATION = "push"
