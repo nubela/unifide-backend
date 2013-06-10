@@ -1,4 +1,13 @@
+from unifide_backend.action.brand.action import CampaignChannels
+
+
 BRAND_NAME = "DADA"
+
+CAMPAIGN_CHANNELS = [
+    CampaignChannels.FACEBOOK,
+    CampaignChannels.TWITTER,
+    CampaignChannels.FOURSQUARE,
+]
 
 BRAND_MENU = [
     {"order": 0,

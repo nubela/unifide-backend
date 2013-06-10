@@ -4,7 +4,9 @@ This file configures a brand.
 """
 from base import items
 from base.items.action import save_container_path
-from brand_cfg import RESERVED_ITEM_CONTAINERS
+from brand_cfg import RESERVED_ITEM_CONTAINERS, CAMPAIGN_CHANNELS
+from unifide_backend.action import brand
+from unifide_backend.action.brand.action import convert_campaign_channels
 
 
 def create_item_containers(container_dic):
@@ -17,6 +19,11 @@ def create_item_containers(container_dic):
 
 
 if __name__ == "__main__":
+    print "Creating reserved item containers.."
+    config_obj = convert_campaign_channels(CAMPAIGN_CHANNELS)
+    brand.save(config_obj)
+    print "Done!"
+
     print "Creating reserved item containers.."
     create_item_containers(RESERVED_ITEM_CONTAINERS)
     print "Done!"
