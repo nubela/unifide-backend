@@ -16,7 +16,7 @@ def convert_campaign_channels(cc_obj):
 class CampaignChannels:
     FACEBOOK = "facebook"
     TWITTER = "twitter"
-    FOURSQUARE = "4sq"
+    FOURSQUARE = "foursquare"
     BLOG = "blog"
     WEB_MOBILE = "web_and_mobile"
     PUSH_NOTIFICATION = "push_notification"
