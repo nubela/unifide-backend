@@ -84,7 +84,7 @@ def _update():
         d = feedparser.parse(keyword.feed_url)
         for entry in d["entries"]:
             if get_mention_by_alert_id(entry["id"]) is None and entry["title"] != "Feeds for Google Alerts":
-                _save_mention(entry)
+                _save_mention(keyword, entry)
 
 
 def get_mention_by_alert_id(alert_id):
@@ -95,13 +95,14 @@ def get_mention_by_alert_id(alert_id):
     return Mention.unserialize(dic) if dic is not None else None
 
 
-def _save_mention(feed_entry):
+def _save_mention(keyword, feed_entry):
     coll = Mention.collection()
     mention_obj = Mention()
     mention_obj.url = feed_entry["link"]
     mention_obj.summary = feed_entry["summary"]
     mention_obj.title = feed_entry["title"]
     mention_obj.alert_id = feed_entry["id"]
+    mention_obj.keyword = keyword
     mention_obj.modification_timestamp_utc = datetime.fromtimestamp(mktime(feed_entry["published_parsed"]))
     coll.save(mention_obj.serialize())
 
