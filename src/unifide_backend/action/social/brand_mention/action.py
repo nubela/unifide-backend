@@ -88,7 +88,7 @@ def _update():
 
 
 def get_mention_by_alert_id(alert_id):
-    coll = Keyword.collection()
+    coll = Mention.collection()
     dic = coll.find_one({
         "alert_id": alert_id
     })
