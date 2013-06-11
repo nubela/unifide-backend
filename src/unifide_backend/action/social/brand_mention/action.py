@@ -84,7 +84,7 @@ def _update():
         d = feedparser.parse(keyword.feed_url)
         for entry in d["entries"]:
             if get_mention_by_alert_id(entry["id"]) is None and entry["title"] != "Feeds for Google Alerts":
-                _save_mention(keyword, entry)
+                _save_mention(keyword.keyword, entry)
 
 
 def get_mention_by_alert_id(alert_id):
