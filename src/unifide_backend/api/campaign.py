@@ -2,6 +2,7 @@ import datetime
 import traceback
 import Image
 import re
+import requests
 
 from StringIO import StringIO
 from flask import redirect
@@ -41,12 +42,15 @@ def put_campaign_data():
     from unifide_backend.action.social.facebook.action import put_fb_post, get_fb_user, put_fb_event
     from unifide_backend.action.social.twitter.action import put_tweet, get_tw_user
     from unifide_backend.action.social.foursquare.action import put_fsq_update
-    from base.media.action import __store_locally, url_for
+    from base.media.action import __store_locally, url_for, save_media
     from base.media.model import Media
+    from base.items.action import save as save_item
+    from base import items
     from base.items.model import Item
     from unifide_backend.action.util import url_generator
     from cfg import DOMAIN_PATH
 
+    print "starting"
     user_id = request.form.get("user_id")
     brand_name = request.form.get("brand_name")
     platforms = request.form.getlist("platforms")
@@ -82,6 +86,7 @@ def put_campaign_data():
         if media_file.filename != "":
             if request.files.get("media_file").mimetype in ["image/png", "image/gif", "image/jpeg", "image/jpg"]:
                 file_path = __store_locally(media_file.filename, media_file)
+                media_obj = save_media(media_file)
 
     # open file stream to user uploaded image
     if file_path:
@@ -91,13 +96,14 @@ def put_campaign_data():
         image_io.seek(0)
     # open file stream to item image
     if media_obj:
-        image = Image.open(url_for(media_obj))
-        image_io = StringIO()
+        req = requests.get(url_for(media_obj))
+        image = Image.open(StringIO(req.content))
         image.save(image_io, 'jpeg', quality=95)
         image_io.seek(0)
 
     kvp = {}
-    if PLATFORM_CAMPAIGN in platforms or PLATFORM_BLOG in platforms:
+
+    if PLATFORM_CAMPAIGN in platforms:
         c = Campaign()
         c.uid = user_id
         c.title = title
@@ -109,13 +115,21 @@ def put_campaign_data():
         c.happening_datetime_start = event_datetime_start if event_datetime_start is not None else None
         c.happening_datetime_end = event_datetime_end if event_datetime_end is not None else None
         c._id = save(c)
-
-    if PLATFORM_CAMPAIGN in platforms:
         kvp["campaign"] = c._id
         print "done campaign"
 
     if PLATFORM_BLOG in platforms:
-        kvp["blog"] = c._id
+        blog = Item()
+        blog.name = title
+        blog.description = description
+        blog.media_id = media_obj._id if media_obj is not None else None
+
+        blog_path_list = ["Pages", "Blog"]
+        blog_container = items.container_from_path(blog_path_list)
+        blog.container_id = blog_container._id
+
+        blog._id = save_item(blog)
+        kvp["blog"] = blog._id
         print "done blog"
 
     # add a link to web/blog campaign for social network campaigns
