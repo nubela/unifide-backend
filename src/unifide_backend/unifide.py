@@ -2,8 +2,7 @@
 # backend for unifide
 #===============================================================================
 from flask import Flask
-from cfg import UPLOAD_FOLDER
-from local_config import API_TO_REGISTER, LOG_FILE, DEBUG
+from cfg import UPLOAD_FOLDER, API_TO_REGISTER, LOG_FILE, DEBUG
 from unifide_backend.action.cp.action import init_cp_menu
 import api
 
