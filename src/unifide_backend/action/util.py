@@ -69,7 +69,7 @@ def strip_tags(html):
 
 
 def url_generator(relative_path, string):
-    url = relative_path + str(datetime.now().year) + "/" + str('%02d' % datetime.now().month) + "/"
+    url = relative_path + "b/" + str(datetime.now().year) + "/" + str('%02d' % datetime.now().month) + "/"
 
     for word in URL_IGNORE_KEYWORD:
         pattern = re.compile(" " + word + " ", re.IGNORECASE)
