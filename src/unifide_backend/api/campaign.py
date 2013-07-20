@@ -1,4 +1,5 @@
 import datetime
+import os
 import traceback
 import Image
 import re
@@ -9,6 +10,9 @@ from flask import redirect
 from flask.globals import request
 from flask.helpers import json, jsonify
 from base.util import coerce_bson_id
+from base.media.action import MediaStorage
+from cfg import UPLOAD_FOLDER
+
 
 PLATFORM_CAMPAIGN = "web"
 PLATFORM_FACEBOOK = "facebook"
@@ -94,10 +98,16 @@ def put_campaign_data():
         image_io = StringIO()
         image.save(image_io, 'jpeg', quality=95)
         image_io.seek(0)
+
     # open file stream to item image
     if media_obj:
-        req = requests.get(url_for(media_obj))
-        image = Image.open(StringIO(req.content))
+        if media_obj.storage == MediaStorage.LOCAL:
+            img_file_path = os.path.join(UPLOAD_FOLDER, media_obj.file_name)
+            image = Image.open(img_file_path)
+        else:
+            req = requests.open(url_for(media_obj))
+            image = Image.open(StringIO(req.content))
+        image_io = StringIO()
         image.save(image_io, 'jpeg', quality=95)
         image_io.seek(0)
 
