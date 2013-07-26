@@ -1,7 +1,7 @@
 flup
 python-dateutil==2.1
-tweepy
-foursquare
+tweepy==2.1
+foursquare==20130707
 galerts==0.2.4dev
 feedparser==5.1.3
 Flask==0.9
