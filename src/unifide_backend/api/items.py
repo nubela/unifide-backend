@@ -129,9 +129,10 @@ def put_item():
             else:
                 media_obj = save_media(media_file, UPLOAD_METHOD)
         file_media_map[f] = media_obj
+    main_media_obj = file_media_map["media_file"] if "media_file" in file_media_map else None
 
     if obj_id is None or obj_id == "":
-        new_item(container_obj, custom_attr, custom_media, custom_tags, description, file_media_map, media_obj, name,
+        new_item(container_obj, custom_attr, custom_media, custom_tags, description, file_media_map, main_media_obj, name,
                  price, quantity, status)
     else:
         update_item(custom_attr, custom_media, custom_tags, description, file_media_map, name, obj_id, price, quantity)
