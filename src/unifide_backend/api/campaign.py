@@ -177,7 +177,7 @@ def put_campaign_data():
     put_mapping(user_id, brand_name, kvp, publish_datetime, type, state)
 
     if redirect_url is not None:
-        return redirect(redirect_url)
+        return redirect(redirect_url, code=303)
 
     return jsonify({"status": "ok"})
 

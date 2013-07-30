@@ -58,7 +58,7 @@ def put_business_info():
                                     org_info_obj.name, org_info_obj.address, org_info_obj.phone, org_info_obj.description)
 
     if redirect_url is not None:
-        return redirect(redirect_url)
+        return redirect(redirect_url, code=303)
 
     return jsonify({
         "status": "ok"

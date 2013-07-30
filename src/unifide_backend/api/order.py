@@ -29,7 +29,7 @@ def post_order_status():
     orders.save(order_obj)
 
     if redirect_url:
-        return redirect(redirect_url)
+        return redirect(redirect_url, code=303)
 
     return jsonify({"status": "ok"})
 

@@ -138,7 +138,7 @@ def put_item():
         update_item(custom_attr, custom_media, custom_tags, description, file_media_map, name, obj_id, price, quantity)
 
     if redirect_url is not None:
-        return redirect(redirect_url)
+        return redirect(redirect_url, code=303)
 
     return jsonify({
         "status": "ok",
