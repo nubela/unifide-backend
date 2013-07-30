@@ -124,7 +124,7 @@ def put_item():
         media_file = request.files.get(f)
         media_obj = None
         if media_file.filename != "":
-            if request.files.get("media_file").mimetype in ["image/png", "image/gif", "image/jpeg", "image/jpg"]:
+            if media_file.mimetype in ["image/png", "image/gif", "image/jpeg", "image/jpg"]:
                 media_obj = save_image(media_file, UPLOAD_METHOD)
             else:
                 media_obj = save_media(media_file, UPLOAD_METHOD)
