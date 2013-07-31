@@ -6,7 +6,7 @@ import re
 import requests
 
 from StringIO import StringIO
-from flask import redirect
+from flask import redirect, render_template
 from flask.globals import request
 from flask.helpers import json, jsonify
 from base.util import coerce_bson_id
@@ -177,7 +177,9 @@ def put_campaign_data():
     put_mapping(user_id, brand_name, kvp, publish_datetime, type, state)
 
     if redirect_url is not None:
-        return redirect(redirect_url, code=303)
+        return render_template("redirect.html", **{
+            "redirect_url": redirect_url
+        })
 
     return jsonify({"status": "ok"})
 

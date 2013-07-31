@@ -1,6 +1,6 @@
-import re
-from flask import jsonify, request, redirect
+from flask import jsonify, request, render_template
 from base import org
+
 
 def put_business_info():
     """
@@ -10,6 +10,7 @@ def put_business_info():
     from unifide_backend.action.social.facebook.action import update_page_attr as facebook
     from unifide_backend.action.social.twitter.action import update_profile as twitter
     from unifide_backend.action.social.foursquare.action import update_venue as foursquare
+
 
     user_id = request.form.get("user_id")
     brand_name = request.form.get("brand_name")
@@ -52,13 +53,15 @@ def put_business_info():
                  phone=org_info_obj.phone)
     if brand_obj.twitter is not None:
         twitter(brand_obj.twitter["access_token"]["key"], brand_obj.twitter["access_token"]["secret"],
-                                    org_info_obj.name, org_info_obj.website, org_info_obj.address, org_info_obj.info)
+                org_info_obj.name, org_info_obj.website, org_info_obj.address, org_info_obj.info)
     if brand_obj.foursquare is not None:
         foursquare(brand_obj.foursquare["venues"][0], brand_obj.foursquare["access_token"],
-                                    org_info_obj.name, org_info_obj.address, org_info_obj.phone, org_info_obj.description)
+                   org_info_obj.name, org_info_obj.address, org_info_obj.phone, org_info_obj.description)
 
     if redirect_url is not None:
-        return redirect(redirect_url, code=303)
+        return render_template("redirect.html", **{
+            "redirect_url": redirect_url
+        })
 
     return jsonify({
         "status": "ok"

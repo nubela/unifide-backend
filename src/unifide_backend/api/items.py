@@ -1,4 +1,4 @@
-from flask import request, json, jsonify, redirect
+from flask import request, json, jsonify, redirect, render_template
 from base import items, tags
 from base.items import ItemStatus, Item, container_path
 from base.items.action import container_from_path
@@ -138,7 +138,9 @@ def put_item():
         update_item(custom_attr, custom_media, custom_tags, description, file_media_map, name, obj_id, price, quantity)
 
     if redirect_url is not None:
-        return redirect(redirect_url, code=303)
+        return render_template("redirect.html", **{
+            "redirect_url": redirect_url
+        })
 
     return jsonify({
         "status": "ok",

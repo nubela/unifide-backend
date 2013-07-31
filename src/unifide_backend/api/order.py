@@ -1,4 +1,4 @@
-from flask import jsonify, request, redirect
+from flask import jsonify, request, render_template
 import orders
 
 
@@ -29,7 +29,9 @@ def post_order_status():
     orders.save(order_obj)
 
     if redirect_url:
-        return redirect(redirect_url, code=303)
+        return render_template("redirect.html", **{
+            "redirect_url": redirect_url
+        })
 
     return jsonify({"status": "ok"})
 
