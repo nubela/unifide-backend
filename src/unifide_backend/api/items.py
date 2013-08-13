@@ -79,12 +79,13 @@ def update_item(custom_attr, custom_media, custom_tags, description, file_media_
     item_obj.quantity = quantity
     item_obj.custom_attr_lis = custom_attr
     item_obj.custom_media_lis = custom_media
-    if request.files.get("media_file").filename != "":
-        item_obj.media_id = file_media_map["media_file"].obj_id()
+
+    item_obj.media_id = file_media_map["media_file"].obj_id() if request.form.get("media_file", None) is not None else item_obj.media_id
     for k, v in file_media_map.items():
         if k == "media_file": continue
         if v is not None:
             setattr(item_obj, k, v.obj_id())
+
     for k in custom_attr:
         setattr(item_obj, k, request.form.get(k, None))
     items.save(item_obj)
@@ -114,8 +115,11 @@ def put_item():
     #extras
     custom_attr_json = request.form.get("custom_attr_lis", request.args.get("custom_attr_lis", None))
     custom_attr = json.loads(custom_attr_json) if custom_attr_json is not None and custom_attr_json != "" else []
-    tags_json = request.form.get("tags", request.args.get("tags", None))
-    custom_tags = json.loads(tags_json) if tags_json is not None else []
+    tags_json = request.form.get("tags", request.args.get("tags", "[]"))
+    try:
+        custom_tags = json.loads(tags_json) if tags_json is not None else []
+    except ValueError:
+        custom_tags = []
     custom_media_json = request.form.get("custom_media_lis", request.args.get("custom_media_lis", None))
     custom_media = json.loads(custom_media_json) if custom_media_json is not None else []
 
