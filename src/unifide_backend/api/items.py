@@ -1,8 +1,11 @@
-from flask import request, json, jsonify, redirect, render_template
+import tempfile
+import Image
+from flask import request, json, jsonify
 from base import items, tags
 from base.items import ItemStatus, Item, container_path
 from base.items.action import container_from_path
 from base.media.action import save_image, save_media
+from base.util import jsonp
 from cfg import UPLOAD_METHOD
 
 
@@ -51,7 +54,7 @@ def new_item(container_obj, custom_attr, custom_media, custom_tags, description,
     item_obj.status = status
     item_obj.custom_attr_lis = custom_attr
     item_obj.custom_media_lis = custom_media
-    item_obj.media_id = media_obj.obj_id() if request.files.get("media_file").filename != "" else None
+    item_obj.media_id = media_obj.obj_id() if request.form.get("media_file", None) is not None else None
     for k, v in file_media_map.items():
         if k == "media_file": continue
         if hasattr(item_obj, k): continue
@@ -88,59 +91,64 @@ def update_item(custom_attr, custom_media, custom_tags, description, file_media_
     #remove all tags
     tags.clear(item_obj)
     #tag it
-    print custom_tags
     for tag_name in custom_tags:
         tags.tag(item_obj, tag_name)
 
 
+@jsonp
 def put_item():
     """
     (PUT: item)
     """
     #attributes
-    obj_id = request.form.get("id", None)
-    path_lis_json = request.form.get("path_lis", None)
+    obj_id = request.form.get("id", request.args.get("id", None))
+    path_lis_json = request.form.get("path_lis", request.args.get("path_lis", None))
     path_lis = json.loads(path_lis_json) if path_lis_json is not None and path_lis_json != "" else None
     container_obj = container_from_path(container_path(path_lis))
-    name = request.form.get("name")
-    description = request.form.get("description")
-    price = request.form.get("price", None)
-    quantity = request.form.get("quantity", None)
-    status = request.form.get("status", ItemStatus.VISIBLE)
-    redirect_url = request.form.get("redirect_to", None)
+    name = request.form.get("name", request.args.get("name", None))
+    description = request.form.get("description", request.args.get("description", None))
+    price = request.form.get("price", request.args.get("price", None))
+    quantity = request.form.get("quantity", request.args.get("quantity", None))
+    status = request.form.get("status", request.args.get("status", ItemStatus.VISIBLE))
 
     #extras
-    custom_attr_json = request.form.get("custom_attr_lis", None)
+    custom_attr_json = request.form.get("custom_attr_lis", request.args.get("custom_attr_lis", None))
     custom_attr = json.loads(custom_attr_json) if custom_attr_json is not None and custom_attr_json != "" else []
-    tags_json = request.form.get("tags", None)
+    tags_json = request.form.get("tags", request.args.get("tags", None))
     custom_tags = json.loads(tags_json) if tags_json is not None else []
-    custom_media_json = request.form.get("custom_media_lis", None)
+    custom_media_json = request.form.get("custom_media_lis", request.args.get("custom_media_lis", None))
     custom_media = json.loads(custom_media_json) if custom_media_json is not None else []
 
     #handle files
     file_media_map = {}
     files = ["media_file"] + custom_media
-    for f in files:
-        media_file = request.files.get(f)
-        media_obj = None
-        if media_file.filename != "":
-            if media_file.mimetype in ["image/png", "image/gif", "image/jpeg", "image/jpg"]:
-                media_obj = save_image(media_file, UPLOAD_METHOD)
-            else:
-                media_obj = save_media(media_file, UPLOAD_METHOD)
-        file_media_map[f] = media_obj
-    main_media_obj = file_media_map["media_file"] if "media_file" in file_media_map else None
+    for f_name in files:
+        base64_encoded = request.form.get(f_name, request.args.get(f_name))
+        if base64_encoded is None: continue
+
+        f = tempfile.NamedTemporaryFile(delete=False)
+        f.write(base64_encoded.decode("base64"))
+        f.close()
+
+        img_file, media_obj = None, None
+        try:
+            img_file = open(f.name)
+            _ = Image.open(f.name)
+            media_obj = save_image(img_file, UPLOAD_METHOD)
+            img_file.close()
+        except IOError:
+            img_file = open(f.name)
+            media_obj = save_media(img_file, UPLOAD_METHOD)
+            img_file.close()
+        file_media_map[f_name] = media_obj
+    main_media_obj = file_media_map["media_file"] if "media_file" in file_media_map else None;
 
     if obj_id is None or obj_id == "":
-        new_item(container_obj, custom_attr, custom_media, custom_tags, description, file_media_map, main_media_obj, name,
+        new_item(container_obj, custom_attr, custom_media, custom_tags, description, file_media_map, main_media_obj,
+                 name,
                  price, quantity, status)
     else:
         update_item(custom_attr, custom_media, custom_tags, description, file_media_map, name, obj_id, price, quantity)
-
-    if redirect_url is not None:
-        return render_template("redirect.html", **{
-            "redirect_url": redirect_url
-        })
 
     return jsonify({
         "status": "ok",
@@ -182,6 +190,9 @@ def _register_api(app):
 
     app.add_url_rule('/item/',
                      "put_item", put_item, methods=['PUT', 'POST'])
+
+    app.add_url_rule('/put_item/',
+                     "put_item", put_item, methods=['GET'])
 
     app.add_url_rule('/item/',
                      "del_item", del_item, methods=['DELETE'])
