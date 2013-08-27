@@ -1,4 +1,10 @@
+from base.users.mock import gen_groups
 from unifide_backend.action.brand.action import CampaignChannels
+from base import items
+from base.items.mock import Generate, ItemAttr, ContainerAttr, gen_model
+from ecommerce import inventory
+from ecommerce.coupons.mock import new_container_coupon
+from ecommerce.discounts.mock import gen_discounts
 
 
 BRAND_NAME = "DADA"
@@ -7,7 +13,14 @@ CAMPAIGN_CHANNELS = [
     CampaignChannels.FACEBOOK,
     CampaignChannels.TWITTER,
     CampaignChannels.FOURSQUARE,
+    CampaignChannels.WEB_MOBILE,
+    CampaignChannels.PUSH_NOTIFICATION,
 ]
+
+USER_GROUPS = {
+    "admin": "Admin group",
+    "normal": "Normal users",
+}
 
 BRAND_MENU = [
     {"order": 0,
@@ -19,7 +32,6 @@ BRAND_MENU = [
              {"name": "Facebook", "link": "/facebook/page/activity", "order": "2"},
              {"name": "Twitter", "link": "/twitter/activity", "order": "3"},
              {"name": "Foursquare", "link": "/foursquare/venue/activity", "order": "4"},
-             {"name": "Brand Mention", "link": "/brand-mention", "order": "5"},
              {"name": "divider", "link": "", "order": "6"},
              {"name": "Web / Mobile", "link": "/web/campaign/activity", "order": "7"}
          ]},
@@ -38,80 +50,37 @@ BRAND_MENU = [
          [
              {"name": "Business Info", "link": "/bizinfo", "order": "0"},
              {"name": "Comments", "link": "/comments", "order": "1"},
-             {"name": "Orders", "link": "/order", "order": "2"},
              {"name": "divider", "link": "", "order": "3"},
              {"name": "Items", "link": "/items", "order": "4"}
-         ]}
+         ]},
+    {"order": 3,
+     "name": "ECOMMERCE",
+     "sub-menu":
+         [
+             {"name": "Manage Orders", "link": "/order", "order": "0"},
+             {"name": "Monitor Inventory", "link": "/inventory", "order": "1"},
+             {"name": "divider", "link": "", "order": "2"},
+             {"name": "Discounts", "link": "/discount", "order": "3"},
+             {"name": "Coupons", "link": "/coupon", "order": "4"},
+             {"name": "Cashbacks", "link": "/cashback", "order": "5"},
+             {"name": "Shipping", "link": "/shipping", "order": "6"},
+             {"name": "Taxes", "link": "/taxes", "order": "7"},
+         ]},
 ]
 
-RESERVED_ITEM_CONTAINERS = {
-    "Other Business Info": {
-        "description": None,
-        "path_lis": ["Other Business Info"],
-        "children": {
-            "Mobile Maps": {
-                "description": "Location Maps for mobile app",
-                "path_lis": ["Other Business Info", "Mobile Maps"],
-            },
-
-            "Branch Addresses": {
-                "description": "For addresses of branches",
-                "path_lis": ["Other Business Info", "Branch Addresses"],
-            },
-
-            "Opening Hours": {
-                "description": "Your Business's Opening Hours",
-                "path_lis": ["Other Business Info", "Opening Hours"],
-            }
-        },
+MODEL = {
+    "Clothings": {
+        "containers": Generate.ITEMS_CONTAINERS,
+        "items": [
+            {
+                "name": "test",
+                "meta": "true",
+                ItemAttr.INSTRUCTIONS: "This is the meta container item."},
+            {
+                "custom": Generate.ITEMS_ONLY,
+                "custom_attr": {"brochure_number": range(1, 100)},
+            }],
+        ContainerAttr.DISCOUNT_PERCENTAGE: "20",
+        ContainerAttr.DESCRIPTION: "This container manages your items to sell in your eCommerce store",
     },
-
-    "Menu": {
-        "description": "Manage your menu items here",
-        "path_lis": ["Menu"],
-    },
-
-    "Specials": {
-        "description": "Manage your Specials items here",
-        "path_lis": ["Specials"],
-    },
-
-    "Pages": {
-        "description": "Manage copy for each page",
-        "path_lis": ["Pages"],
-        "children": {
-
-            "Contact Us": {
-                "description": None,
-                "path_lis": ["Pages", "Contact Us"],
-                "children": {
-                    "Emails": {
-                        "description": None,
-                        "path_lis": ["Pages", "Contact Us", "Emails"],
-                    }
-                }
-            },
-
-            "Specials": {
-                "description": None,
-                "path_lis": ["Pages", "Specials"],
-            },
-
-            "Menu": {
-                "description": None,
-                "path_lis": ["Pages", "Menu"],
-            },
-
-            "Our Story": {
-                "description": None,
-                "path_lis": ["Pages", "Our Story"],
-            },
-
-            "Side Bar": {
-                "description": None,
-                "path_lis": ["Pages", "Side Bar"],
-            },
-
-        },
-    }
 }
