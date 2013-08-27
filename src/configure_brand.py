@@ -28,7 +28,7 @@ if __name__ == "__main__":
     config_obj.save()
     print "Done!"
 
-    print "Creating reserved item containers.."
+    print "Creating mock items and containers.."
     gen_model(MODEL)
     gen_discounts(MODEL)
     new_container_coupon("asd", 20, items.container_from_path(["Clothings"])._id)
@@ -36,6 +36,6 @@ if __name__ == "__main__":
     inventory.add_to_inventory(items.container_from_path(["Clothings"])._id)
     print "Done!"
 
-    print "Creating reserved item containers.."
+    print "Creating user groups.."
     gen_groups(USER_GROUPS)
     print "Done!"
