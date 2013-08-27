@@ -2,6 +2,7 @@ from datetime import datetime
 from time import mktime
 from flask import request, jsonify
 from base import items
+from base.util import coerce_bson_id
 from ecommerce import discounts
 
 
@@ -16,11 +17,11 @@ def _new_discount(admin_id, amount, applicable_on, begins_on, container_id, desc
     discount_obj.discount_scope = discounts.DiscountScope.ALL_ITEMS
     if applicable_on == "item":
         discount_obj.discount_scope = discounts.DiscountScope.ITEM_ONLY
-        discount_obj.obj_id = item_id
+        discount_obj.obj_id = coerce_bson_id(item_id)
         discount_obj.coll_name = items.Item.coll_name()
     elif applicable_on == "container":
         discount_obj.discount_scope = discounts.DiscountScope.CONTAINER_WIDE
-        discount_obj.obj_id = container_id
+        discount_obj.obj_id = coerce_bson_id(container_id)
         discount_obj.coll_name = items.Container.coll_name()
     if discount_type == "percentage":
         discount_obj.discount_percentage = float(amount)
