@@ -12,6 +12,10 @@ def new_cashback(admin_id, description, make_active, min_spending, name, perc):
     c.admin_id = admin_id
     if not make_active:
         c.status = cashbacks.CashbackStatus.DISABLED
+    else:
+        cashbacks.CashbackRule.collection().update({},{
+            "$set": {"status": cashbacks.CashbackStatus.DISABLED}
+        }, upsert=False, multi=True)
     c.save()
 
 
@@ -25,6 +29,8 @@ def put_cashback():
     min_spending = request.form.get("min_spending")
     admin_id = request.form.get("admin_id")
     make_active = request.form.get("make_active", False)
+    if make_active == "false":
+        make_active = False
     new_cashback(admin_id, description, make_active, min_spending, name, perc)
 
     return jsonify({"status": "ok"})
