@@ -44,7 +44,7 @@ def put_container():
 
 
 def new_item(container_obj, custom_attr, custom_media, custom_tags, description, file_media_map, media_obj, name, price,
-             quantity, status):
+             quantity, status, group_id):
     item_obj = Item()
     item_obj.name = name
     item_obj.description = description
@@ -55,6 +55,8 @@ def new_item(container_obj, custom_attr, custom_media, custom_tags, description,
     item_obj.custom_attr_lis = custom_attr
     item_obj.custom_media_lis = custom_media
     item_obj.media_id = media_obj.obj_id() if request.form.get("media_file", None) is not None else None
+    if group_id:
+        item_obj.group_id = group_id
     for k, v in file_media_map.items():
         if k == "media_file": continue
         if hasattr(item_obj, k): continue
@@ -111,6 +113,7 @@ def put_item():
     price = request.form.get("price", request.args.get("price", None))
     quantity = request.form.get("quantity", request.args.get("quantity", None))
     status = request.form.get("status", request.args.get("status", ItemStatus.VISIBLE))
+    group_id = request.form.get("group-id", request.args.get("group-id", None))
 
     #extras
     custom_attr_json = request.form.get("custom_attr_lis", request.args.get("custom_attr_lis", None))
@@ -150,7 +153,7 @@ def put_item():
     if obj_id is None or obj_id == "":
         new_item(container_obj, custom_attr, custom_media, custom_tags, description, file_media_map, main_media_obj,
                  name,
-                 price, quantity, status)
+                 price, quantity, status, group_id)
     else:
         update_item(custom_attr, custom_media, custom_tags, description, file_media_map, name, obj_id, price, quantity)
 
