@@ -14,6 +14,7 @@ def put_order():
     status = request.form.get("status")
     user_id = request.form.get("user_id")
     admin_id = request.form.get("admin_id")
+    id = request.form.get("_id")
 
     #actionables
     apply_shipping_id = request.form.get("shipping_method", None)
@@ -25,6 +26,9 @@ def put_order():
         apply_coupon_code = True
 
     o = orders.Order()
+    print id
+    if id is not None:
+        o = orders.get(coerce_bson_id(id))
     o.user_id = user_id
     o.status = status
     o.items = [{"obj_id": coerce_bson_id(x["obj_id"]), "quantity": float(x["quantity"])} for x in items_lis]
