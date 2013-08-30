@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 from time import mktime
 from flask import request, jsonify
 from base import items
@@ -63,7 +64,7 @@ def put_coupon():
     begins_on = request.form.get("begins_on")
     ends_on = request.form.get("ends_on")
     user_applicable = request.form.get("user_applicable")
-    user_groups = request.form.get("user_groups")
+    user_groups = json.loads(request.form.get("user_groups"))
     user_id = request.form.get("usr_id")
     valid_times = request.form.get("valid_times")
     admin_id = request.form.get("admin_id")
