@@ -1,6 +1,7 @@
 from flask.globals import request
 from flask.helpers import json, jsonify
 from base import users
+from base.util import coerce_bson_id
 
 
 def put_account_user():
@@ -40,8 +41,10 @@ def put_account_info():
     return jsonify({"status": "ok"})
 
 
-def new_user(address, email, first_name, last_name, middle_name, password, status, user_groups, username):
+def new_user(_id, address, email, first_name, last_name, middle_name, password, status, user_groups, username):
     u = users.User()
+    if _id is not None:
+        u = users.get(_id)
     u.username = username
     u.first_name = first_name
     u.middle_name = middle_name
@@ -51,13 +54,16 @@ def new_user(address, email, first_name, last_name, middle_name, password, statu
     u.groups = user_groups if user_groups is not None else []
     u.account_status = status
     u._id = u.save()
-    users.set_passwd(u, password)
+    
+    if len(password) > 0:
+        users.set_passwd(u, password)
 
 
 def put_user():
     """
     (PUT: user)
     """
+    _id = coerce_bson_id(request.form.get("_id"))
     username = request.form.get("username")
     email = request.form.get("email")
     password = request.form.get("password")
@@ -68,7 +74,8 @@ def put_user():
     user_groups = json.loads(request.form.get("user_groups"))
     status = request.form.get("status")
 
-    new_user(address, email, first_name, last_name, middle_name, password, status, user_groups, username)
+    new_user(_id, address, email, first_name, last_name, middle_name, password, status, user_groups, username)
+
     return jsonify({
         "status": "ok",
     })
