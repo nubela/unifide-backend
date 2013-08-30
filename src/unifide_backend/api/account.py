@@ -54,7 +54,7 @@ def new_user(_id, address, email, first_name, last_name, middle_name, password, 
     u.groups = user_groups if user_groups is not None else []
     u.account_status = status
     u._id = u.save()
-    
+
     if len(password) > 0:
         users.set_passwd(u, password)
 
