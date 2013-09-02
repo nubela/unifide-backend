@@ -209,22 +209,21 @@ def update_campaign_data():
     print brand_obj
     print mapping_obj
 
+    set_dic = {
+        "title": title,
+        "description": description,
+        "happening_datetime_start": event_datetime_start,
+        "happening_datetime_end": event_datetime_end,
+    }
+    if item_list is not None and len(item_list) > 0:
+        set_dic["item_id_lis"] = item_list
+
     if mapping_obj.campaign is not None:
         Campaign.collection().update({"_id": mapping_obj.campaign},
-                                     {"$set" : { "title": title,
-                                                 "description": description,
-                                                 "item_id_lis": item_list,
-                                                 "happening_datetime_start": event_datetime_start,
-                                                 "happening_datetime_end": event_datetime_end}
-                                     })
+                                     {"$set" : set_dic})
     if mapping_obj.blog is not None:
         Campaign.collection().update({"_id": mapping_obj.blog},
-                                     {"$set" : { "title": title,
-                                                 "description": description,
-                                                 "item_id_lis": item_list,
-                                                 "happening_datetime_start": event_datetime_start,
-                                                 "happening_datetime_end": event_datetime_end}
-                                     })
+                                     {"$set" : set_dic})
     if mapping_obj.facebook is not None and mapping_obj.type == "event":
         event = FBEvent.collection().find_one({"_id": coerce_bson_id(mapping_obj.facebook)})
         update_fb_event(event["event_id"], brand_obj.facebook, mapping_obj.state, title, description, event_datetime_start, event_datetime_end)
