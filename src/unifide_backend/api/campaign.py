@@ -312,12 +312,12 @@ def del_campaign():
         # delete campaign
         if mapping_obj.campaign is not None:
             id = mapping_obj.campaign
-            Campaign.collection().update({"_id": coerce_bson_id(id)}, {"$set": {"is_deleted": 1}})
+            Campaign.collection().remove({"_id": coerce_bson_id(id)})
 
         # delete blog
         if mapping_obj.blog is not None:
             id = mapping_obj.blog
-            Campaign.collection().update({"_id": coerce_bson_id(id)}, {"$set": {"is_deleted": 1}})
+            Campaign.collection().remove({"_id": coerce_bson_id(id)})
 
         #delete mapping
         del_mapping(c)
