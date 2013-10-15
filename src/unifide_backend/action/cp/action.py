@@ -30,10 +30,13 @@ def init_cp_menu():
                 menu._id = CPMenu.collection().insert(menu.serialize())
 
 
-def put_new_user_menu(user_id):
+def clear_menu():
+    CPMenu.collection().remove()
+
+def put_new_menu():
+    print "works"
     for item in BRAND_MENU:
         menu = CPMenu()
-        menu.uid = user_id
         menu.order = item["order"]
         menu.first_lvl = item["name"]
 

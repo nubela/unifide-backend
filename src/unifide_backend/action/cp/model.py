@@ -3,7 +3,6 @@ from base.base_model import Base
 
 class CPMenu(Base):
     def __init__(self, **kwargs):
-        self.uid = None
         self.order = None
         self.first_lvl = None
         self.second_lvl = []

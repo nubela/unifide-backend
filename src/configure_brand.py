@@ -7,10 +7,8 @@ from base.items.action import save_container_path
 from base.items.mock import gen_model
 from base.users.mock import gen_groups
 from brand_cfg import CAMPAIGN_CHANNELS, USER_GROUPS, MODEL
-from ecommerce import inventory
-from ecommerce.coupons.mock import new_container_coupon
-from ecommerce.discounts.mock import gen_discounts
 from unifide_backend.action.brand.action import convert_campaign_channels
+from unifide_backend.action.cp.action import put_new_menu, clear_menu
 
 
 def create_item_containers(container_dic):
@@ -23,6 +21,11 @@ def create_item_containers(container_dic):
 
 
 if __name__ == "__main__":
+    print "Saving brand config"
+    clear_menu()
+    put_new_menu()
+    print "Done!"
+
     print "Saving Campaign Channnel Config"
     config_obj = convert_campaign_channels(CAMPAIGN_CHANNELS)
     config_obj.save()
@@ -30,10 +33,6 @@ if __name__ == "__main__":
 
     print "Creating mock items and containers.."
     gen_model(MODEL)
-    gen_discounts(MODEL)
-    new_container_coupon("asd", 20, items.container_from_path(["Clothings"])._id)
-    new_container_coupon("gdsg", 20, items.container_from_path(["Clothings"])._id)
-    inventory.add_to_inventory(items.container_from_path(["Clothings"])._id)
     print "Done!"
 
     print "Creating user groups.."
