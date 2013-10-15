@@ -1,10 +1,5 @@
-from base.users.mock import gen_groups
 from unifide_backend.action.brand.action import CampaignChannels
-from base import items
-from base.items.mock import Generate, ItemAttr, ContainerAttr, gen_model
-from ecommerce import inventory
-from ecommerce.coupons.mock import new_container_coupon
-from ecommerce.discounts.mock import gen_discounts
+from base.items.mock import Generate, ItemAttr, ContainerAttr
 
 
 BRAND_NAME = "DADA"
@@ -80,7 +75,6 @@ MODEL = {
                 "custom": Generate.ITEMS_ONLY,
                 "custom_attr": {"brochure_number": range(1, 100)},
             }],
-        ContainerAttr.DISCOUNT_PERCENTAGE: "20",
         ContainerAttr.DESCRIPTION: "This container manages your items to sell in your eCommerce store",
     },
 }
