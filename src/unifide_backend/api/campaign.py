@@ -46,7 +46,7 @@ def put_campaign_data():
     from unifide_backend.action.social.facebook.action import put_fb_post, get_fb_user, put_fb_event
     from unifide_backend.action.social.twitter.action import put_tweet, get_tw_user
     from unifide_backend.action.social.foursquare.action import put_fsq_update
-    from base.media.action import __store_locally, url_for, save_media
+    from base.media.action import _store_locally, url_for, save_media
     from base.media.model import Media
     from base.items.action import save as save_item
     from base import items
@@ -89,7 +89,7 @@ def put_campaign_data():
         media_file = request.files.get(f)
         if media_file.filename != "":
             if request.files.get("media_file").mimetype in ["image/png", "image/gif", "image/jpeg", "image/jpg"]:
-                file_path = __store_locally(media_file.filename, media_file)
+                file_path = _store_locally(media_file.filename, media_file)
                 media_obj = save_media(media_file)
 
     # open file stream to user uploaded image
