@@ -2,6 +2,7 @@
 Script to migrate existing local media objects to S3
 """
 import os
+from base import media
 from base.media import Media
 from base.media.action import MediaStorage, _store_s3
 from cfg import UPLOAD_FOLDER
@@ -17,5 +18,7 @@ if __name__ == "__main__":
             print "Working on %s.." % (file_path)
             if os.path.isfile(file_path):
                 _store_s3(filename, file_path)
+                m.storage = MediaStorage.S3
+                media.save(m)
                 print "Migrated %s!" % (file_path)
-                # os.remove(file_path)
+                os.remove(file_path)
