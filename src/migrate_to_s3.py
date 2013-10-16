@@ -17,8 +17,8 @@ if __name__ == "__main__":
             file_path = os.path.join(UPLOAD_FOLDER, filename)
             print "Working on %s.." % (file_path)
             if os.path.isfile(file_path):
-                _store_s3(filename, file_path)
                 m.storage = MediaStorage.S3
+                m.url = _store_s3(filename, file_path)
                 media.save(m)
                 print "Migrated %s!" % (file_path)
                 os.remove(file_path)
