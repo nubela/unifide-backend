@@ -3,8 +3,8 @@
 #===============================================================================
 from flask import Flask
 from cfg import UPLOAD_FOLDER, API_TO_REGISTER, LOG_FILE, DEBUG
-from unifide_backend.action.cp.action import init_cp_menu
 import api
+
 
 def _app_init(app):
     init_app(app)
@@ -30,16 +30,15 @@ def _app_init(app):
 
 def _app_init(app):
     init_app(app)
-    init_cp_menu()
 
     if app.config['DEBUG']:
         from werkzeug.wsgi import SharedDataMiddleware
         import os
 
+
         app.wsgi_app = SharedDataMiddleware(app.wsgi_app, {
             '/resources': UPLOAD_FOLDER
         })
-
 
 
 def init_app(app):
