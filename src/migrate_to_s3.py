@@ -11,7 +11,7 @@ if __name__ == "__main__":
     list_of_dic = Media.collection().find({})
     media_objs = [Media.unserialize(x) for x in list_of_dic]
     for m in media_objs:
-        if m.storage == MediaStorage.S3:
+        if m.storage == MediaStorage.LOCAL:
             filename = m.file_name
             file_path = os.path.join(UPLOAD_FOLDER, filename)
             print "Working on %s.." % (file_path)
